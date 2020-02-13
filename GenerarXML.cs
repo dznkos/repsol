@@ -7,6 +7,8 @@ using System.IO;
 using System.Threading;
 using System.Timers;
 using System.Configuration;
+using FacturaBE;
+using FacturaDL;
 using System.Xml;
 using System.Text.RegularExpressions;
 using System.Security.Cryptography;
@@ -15,18 +17,46 @@ using System.Security.Cryptography.X509Certificates;
 using System.ServiceModel;
 using System.Windows.Forms;
 using System.IO.Compression;
-using FacturadorBE;
+using FacturadorLives;
+
 
 namespace FacturadorBL
 {
-    public class GenerarXml
-    {
-        public static List<String> listsaveXml = new List<String> { };
-        public static List<String> errorXml = new List<String> { };
-        public void Main(string[] args)
-        {
 
+    public class GenerarXML
+    {
+        public static void Main(string[] args)
+        {
+            System.Timers.Timer MainTimer = new System.Timers.Timer();
+            MainTimer.Interval = 20000;
+            MainTimer.Start();
+            Console.WindowWidth = 128;
+
+
+            Console.WriteLine(@"
+                   .----.            _____     _        ____   _____    _   _    ____        _      ____      U  ___ u   ____
+             _.'__       `.         |' ___|U  /'\  u U /'___| |_ ' _|U |'|u| |U |  _'\ u U  /'\  u |  _'\      \/'_ \/U |  _'\ u
+     . - -( #) ( #)---/#\          U| |_  u \/ _ \/  \| | u     | |   \| |\| | \| |_) |/  \/ _ \/ /| | | |     | | | | \| |_) |/
+ . '    @             /###\        \|  _|/  / ___ \   | |/__   /| |\   | |_| |  |  _ <    / ___ \ U| |_| |\.-,_| |_| |  |  _ <
+ :                 ,    \### /      |_|    /_/   \_\   \____| u |_|U  <<\___/   |_| \_\  /_/   \_\ |____/ u \_)-\___/   |_| \_\
+   `  -  ..__.-' _.- \##/           )(\\,-  \\    >>  _// \\  _// \\_(__) )(    //   \\_  \\    >>  |||_         \\     //   \\_
+               `;_:      `         (__)(_/ (__)  (__)(__)(__)(__) (__)   (__)  (__)  (__)(__)  (__)(__)_)       (__)   (__)  (__)
+             ??????                 ##########################################################################################
+           /    \\                  ########################################################################################
+       //           \\              --------------------------------------------------------------------------------------
+        `-._______.-'                           FACTURADOR ELECTRONICO --               POWER BY S.M.P.R
+         ___`. | .'___
+     (______|______)
+                             ((    RQS GLOBAL WORK     ))
+
+                            ");
+
+            Console.WriteLine();
+            string Texto;
+            Texto = Console.ReadLine();
+            Iniciar();
         }
+
         public void DoRemovespace(string strFile)
         {
             string str = System.IO.File.ReadAllText(strFile);
@@ -35,23 +65,23 @@ namespace FacturadorBL
             Regex regex = new Regex(@">\s*<");
             string cleanedXml = regex.Replace(str, "><");
             System.IO.File.WriteAllText(strFile, cleanedXml);
+
         }
 
-        // ================ METODO INICIAR ================
-        public void Iniciar()
+        private static void Iniciar()
         {
-            Facturador Fact = new Facturador();
-            var Directorio = new DirectoryInfo(ConfigurationManager.AppSettings["RutaXml"]);
 
+            Factura Fact = new Factura();
+            var Directorio = new DirectoryInfo(ConfigurationManager.AppSettings["RutaXml"]);
             //Carpeta= Carpeta + "\txt_sunat"
 
             foreach (DirectoryInfo d in Directorio.GetDirectories())
             {
                 string[] Nombre = d.Name.Split('-');
                 string ParteInicial = d.Name.Substring(26, 2);   // Nombre[0].Substring(0, 1);
-                //Console.WriteLine(ParteInicial);
+                Console.WriteLine(ParteInicial);
                 string[] N = d.Name.Split('-');
-                String NombreArchivoXml;
+                string NombreArchivoXml;
                 string[] NombreCarpeta;
                 NombreArchivoXml = Nombre[0] + "-" + N[1] + "-" + N[2] + "-" + N[3];
 
@@ -81,41 +111,44 @@ namespace FacturadorBL
                 cont_ = 1;
 
 
-                switch (ParteInicial)
+                if (ParteInicial.Equals("01")) // Factura
                 {
-                    case "01":// Factura
-                        Factura(ConfigurationManager.AppSettings["RutaXml"], d.Name, Fact, "F");
-                        break;
-                    case "03":// BOLETA
-                        Factura(ConfigurationManager.AppSettings["RutaXml"], d.Name, Fact, "B");
-                        break;
-                    case "07":// Nota Credito / (factura)
-                        Factura(ConfigurationManager.AppSettings["RutaXml"], d.Name, Fact, "NC");
-                        break;
-                    case "09":// Guía de remisión remitente (guía)
-                        Factura(ConfigurationManager.AppSettings["RutaXml"], d.Name, Fact, "GR");
-                        break;
-                    case "31":// Guía de remisión transportista
-                        Factura(ConfigurationManager.AppSettings["RutaXml"], d.Name, Fact, "GT");
-                        break;
-                    case "08":// Nota Debito 
-                        Factura(ConfigurationManager.AppSettings["RutaXml"], d.Name, Fact, "ND");
-                        break;
+                    Factura(ConfigurationManager.AppSettings["RutaXml"], d.Name, Fact, "F");
 
-                    
+                }
+                if (ParteInicial.Equals("03")) // BOLETA
+                {
+                    Factura(ConfigurationManager.AppSettings["RutaXml"], d.Name, Fact, "B");
+
+                }
+                if (ParteInicial.Equals("07")) // Nota Credito / (factura)
+                {
+                    Factura(ConfigurationManager.AppSettings["RutaXml"], d.Name, Fact, "NC");
                 }
 
+                if (ParteInicial.Equals("09")) // Guía de remisión remitente (guía)
+                {
+                    Factura(ConfigurationManager.AppSettings["RutaXml"], d.Name, Fact, "GR");
+                }
+                if (ParteInicial.Equals("08")) // Guía de remisión remitente (guía)
+                {
+                    Factura(ConfigurationManager.AppSettings["RutaXml"], d.Name, Fact, "ND");
+                }
+                if (ParteInicial.Equals("31")) // Guía de remisión transportista
+                {
+
+                    Factura(ConfigurationManager.AppSettings["RutaXml"], d.Name, Fact, "GT");
+                }
             }
         }
 
-        // ================ METODO FACTURA ================
-        public static void Factura(string ruta, string NombreArchivo, Facturador Fact, string TipoDocumento)
+        public static void Factura(string ruta, string NombreArchivo, Factura Fact, string TipoDocumento)
         {
             string Path = "";
             // 'Abrir carpeta
             switch (TipoDocumento)
             {
-                case "F":
+                case "F":                
                     Path = ruta + "/" + NombreArchivo + "/" + NombreArchivo + ".fac";
                     break;
                 case "B":
@@ -123,16 +156,15 @@ namespace FacturadorBL
                     break;
 
                 case "NC":
-                case "ND":
-                    if (Fact.SerieDocu.Substring(0, 1).Equals("F"))
-                    {
+                case "ND" :
+                    if (Fact.SerieDocu.Substring(0, 1).Equals("F"))  {
                         Path = ruta + "/" + NombreArchivo + "/" + NombreArchivo + ".fac";
                     }
-                    else
-                    {
+                    else {
                         Path = ruta + "/" + NombreArchivo + "/" + NombreArchivo + ".bol";
                     }
-                    break;
+                    break;  
+              
                 case "GR":
                     Path = ruta + "/" + NombreArchivo + "/" + NombreArchivo + ".gre";
                     break;
@@ -148,7 +180,7 @@ namespace FacturadorBL
             string[] ValorVenta_item = new string[100];
             string[] Item_Clasificacion = new string[100];
             string[] PrecioNeto = new string[100];
-
+            MontoALetrasDL MontoLetras = new MontoALetrasDL();
 
 
             int CanItemCabera = 1;
@@ -178,14 +210,14 @@ namespace FacturadorBL
                         Item = ConfigurationManager.AppSettings["RutaXml"] + "/" + NombreCarpeta[0] + "/" + NombreArchivo + ".item";
                     }
                     break;
+
                 case "NC":
                     if (Fact.SerieDocu.Substring(0, 1).Equals("F"))
                     {
                         fic = ConfigurationManager.AppSettings["RutaXml"] + "/" + NombreCarpeta[0] + "/" + NombreArchivo + ".fac";
                         Item = ConfigurationManager.AppSettings["RutaXml"] + "/" + NombreCarpeta[0] + "/" + NombreArchivo + ".item";
                     }
-                    else
-                    {
+                    else {
                         fic = ConfigurationManager.AppSettings["RutaXml"] + "/" + NombreCarpeta[0] + "/" + NombreArchivo + ".bol";
                         Item = ConfigurationManager.AppSettings["RutaXml"] + "/" + NombreCarpeta[0] + "/" + NombreArchivo + ".item";
                     }
@@ -200,18 +232,8 @@ namespace FacturadorBL
                     break;
             }
 
-            try
-            {
-                texto = File.ReadAllText(fic);
-                textoItem = File.ReadAllText(Item);
-            }
-            catch (Exception ex)
-            {
-                Console.Out.WriteLine(ex.Message);
-                errorXml.Add(NombreArchivo + "-" + ex.Message);
-                return;
-            }
-
+            texto = File.ReadAllText(fic);
+            textoItem = File.ReadAllText(Item);
             //int cont_txt =1;
             string[] text_read = texto.Split('|');
             texto = texto.Replace("\r\n", "^");
@@ -252,7 +274,7 @@ namespace FacturadorBL
                                     //Fact.HoraDoc = words_txt;
                                     if (word.Length <= 11)
                                     {
-                                        if (Validador.vHour(word, "") == true | word == "00:00:00.0z")
+                                        if (ValidarCampos.vHour(word, "") == true | word == "00:00:00.0z")
                                         {
                                             Fact.HoraDoc = word;
                                         }
@@ -295,7 +317,7 @@ namespace FacturadorBL
                                 case 4: //Tipo de moneda
                                     if (word.IsNumericInt().Equals(false))
                                     {
-                                        if (Validador.Val_tip_moneda_6(word).Equals(false))
+                                        if (ValidarCampos.Val_tip_moneda_6(word).Equals(false))
                                         {
                                             Console.Write(word);
                                             Console.Write("#(X) Error _ Tipo de moneda");
@@ -319,7 +341,7 @@ namespace FacturadorBL
                                     //Fact.NombreMoneda = words_txt;
                                     if (word.IsNumericInt().Equals(false))
                                     {
-                                        if (Validador.Val_nomb_tip_mon(word, Fact.TipMone).Equals(false))
+                                        if (ValidarCampos.Val_nomb_tip_mon(word, Fact.TipMone).Equals(false))
                                         {
                                             Console.WriteLine("#(X) Error _ nombre y el tipo de moneda no coinciden");
                                             return;
@@ -434,18 +456,20 @@ namespace FacturadorBL
                                         Console.WriteLine("#(X) Error _ fecha vencimiento");
                                     }
                                     break;
-                                case 15:// Para Nota Credito o Debito
-                                    Fact.Serie_Vinculada_ND_O_NC = word;
+                                case 15 :// Para Nota Credito o Debito
+                                    Fact.Serie_Vinculada_ND_O_NC=word;
                                     break;
-                                case 16:
-                                    Fact.NumeroDocumento_Vinculada_ND_O_ND = word;
+                                case 16 :
+                                    Fact.NumeroDocumento_Vinculada_ND_O_ND=word;
+                                    break ;
+                                case 17 :
+                                    Fact.TipoDocumento_ND_O_ND=word;
                                     break;
-                                case 17:
-                                    Fact.TipoDocumento_ND_O_ND = word;
+                                case 18 :
+                                    Fact.FECHA_Vinculada_ND_O_NC=word;
                                     break;
-                                case 18:
-                                    Fact.FECHA_Vinculada_ND_O_NC = word;
-                                    break;
+                                    
+
                             }
                             break;
                         case 2:
@@ -481,7 +505,7 @@ namespace FacturadorBL
                                         Fact.NumerodocumenIdenti = word;
 
                                     //validacion
-                                    if (Validador.Validar_CodIdent(Fact.Cod_Docu_identi))
+                                    if (ValidarCampos.Validar_CodIdent(Fact.Cod_Docu_identi))
                                     {
                                         String ValDocuIde = Fact.Cod_Docu_identi;
 
@@ -527,7 +551,7 @@ namespace FacturadorBL
 
                                                 Fact.Igv = 0.00;
 
-                                                if (Validador.Validar_CodIdent(Fact.Cod_Docu_identi))
+                                                if (ValidarCampos.Validar_CodIdent(Fact.Cod_Docu_identi))
                                                 {
                                                 }
                                                 else if (Fact.NumerodocumenIdenti.Length == 4 & ValDocuIde == "0")
@@ -702,7 +726,7 @@ namespace FacturadorBL
                                     break;
 
                                 case 8: // CANTIDAD BOLSAS
-
+                                    
                                     if (word.IsNumericInt().Equals(true))
                                     {
                                         Fact.CantidadBolsa = Convert.ToDouble(word);
@@ -790,9 +814,9 @@ namespace FacturadorBL
             string[] N = NombreArchivo.Split('-');
             string NombreArchivoXml = N[2] + "-" + N[3] + "-" + N[0] + "-" + N[1] + ".xml";
 
-            string path = ConfigurationManager.AppSettings["XmlMain"] + "/" + NombreArchivoXml;
+            string path = ConfigurationManager.AppSettings["RutaXml"] + "/" + NombreArchivoXml;
 
-            Fact.Monto_Letras = Tools2.GetLetras(Fact.Total.ToString(), "");
+            Fact.Monto_Letras = MontoLetras.MontoALetras(Fact.Total.ToString(), "");
             //Inicio
             var xmlNacional = "<?xml version='1.0' encoding='ISO-8859-1'?> ";
             switch (TipoDocumento)
@@ -837,19 +861,17 @@ namespace FacturadorBL
              + " </ext:ExtensionContent> "
              + " </ext:UBLExtension> "
              + " </ext:UBLExtensions>"
-             + " <cbc:UBLVersionID>2.1</cbc:UBLVersionID> "; //Obligatorio
+             + " <cbc:UBLVersionID>2.1</cbc:UBLVersionID> "; //Obligatorio--ND (obligatorio)
 
-            if (TipoDocumento == "GR")
-            {
-                xmlNacional = xmlNacional
-                + " <cbc:CustomizationID>1.0</cbc:CustomizationID> "; //Obligatorio
-            }
-            else
-            {
-                xmlNacional = xmlNacional
-                + " <cbc:CustomizationID>2.0</cbc:CustomizationID> "; //Obligatorio
-            }
-
+             if (TipoDocumento == "GR"){
+                 xmlNacional = xmlNacional
+                 + " <cbc:CustomizationID>1.0</cbc:CustomizationID> "; //Obligatorio   1.-
+             }
+             else {
+                 xmlNacional = xmlNacional
+                 + " <cbc:CustomizationID>2.0</cbc:CustomizationID> "; //Obligatorio --ND (obligatorio)  2.- 
+             }
+             
             //switch (TipoDocumento)
             //{
             //    case "F":
@@ -860,18 +882,18 @@ namespace FacturadorBL
             //        //+ " schemeURI='urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo17'>" + Fact.Cod_tip_ope + "</cbc:ProfileID> "; // Tipo Operacion - Obligatorio         
             //        //break;
             //}
-
+            
             xmlNacional = xmlNacional
-            + " <cbc:ID>" + Fact.SerieDocu + "-" + Fact.NumeroDocu + "</cbc:ID> "
-            + " <cbc:IssueDate>" + Fact.FechaEmi + "</cbc:IssueDate> "
-            + " <cbc:IssueTime>" + Fact.HoraDoc + "</cbc:IssueTime> ";
+            + " <cbc:ID>" + Fact.SerieDocu + "-" + Fact.NumeroDocu + "</cbc:ID> "//ND (obligatorio) 3-Numero(serie - Numero Correlativo)
+            + " <cbc:IssueDate>" + Fact.FechaEmi + "</cbc:IssueDate> "//ND (obligatorio) 4- Fecha Emision
+            + " <cbc:IssueTime>" + Fact.HoraDoc + "</cbc:IssueTime> "; // ND Hora Emision 5 
             switch (TipoDocumento)
             {
                 case "F":
                 case "B":
                     xmlNacional = xmlNacional
                     + " <cbc:InvoiceTypeCode listAgencyName='PE:SUNAT' listID='"
-                        // listName='SUNAT:Identificador de Tipo de Documento'"
+                      // listName='SUNAT:Identificador de Tipo de Documento'"
                     + Fact.Cod_tip_ope + "' listName='Tipo de Documento'"
                     + " listSchemeURI='urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo51'"
                     + " listURI='urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo01' name='Tipo de Operacion'>"
@@ -902,22 +924,15 @@ namespace FacturadorBL
                 case "B":
                 case "ND":
                     xmlNacional = xmlNacional
-                        //+ "<cbc:Note languageLocaleID='" + Fact.CodLeye + "'>0501002017062500125</cbc:Note>";
+                      //+ "<cbc:Note languageLocaleID='" + Fact.CodLeye + "'>0501002017062500125</cbc:Note>";
                     + " <cbc:Note languageLocaleID='" + Fact.CodLeye + "'><![CDATA[" + Fact.Monto_Letras + " " + Fact.NombreMoneda + "]]></cbc:Note>"
-                        // + "<cbc:Note><![CDATA[" + Fact.Observacion + "]]></cbc:Note>";
+                      // + "<cbc:Note><![CDATA[" + Fact.Observacion + "]]></cbc:Note>";
                     + " <cbc:DocumentCurrencyCode listAgencyName='United Nations Economic Commission for Europe' listID='ISO 4217 Alpha' listName='Currency'>"
-                    + Fact.TipMone + "</cbc:DocumentCurrencyCode>"; //Tipo Moneda
+                    + Fact.TipMone + "</cbc:DocumentCurrencyCode>"; //Tipo Moneda ND (Obligatorio) 8
                     break;
-            }
-            //switch (TipoDocumento)
-            //{
-            //    case "F" :
-            //    case "NC":
-            //    xmlNacional = xmlNacional
-            //    + " <cbc:DocumentCurrencyCode listAgencyName='United Nations Economic Commission for Europe' listID='ISO 4217 Alpha' listName='Currency'>"
-            //    + Fact.TipMone + "</cbc:DocumentCurrencyCode>"; //Tipo Moneda
-            //    break;
-            //}
+               
+               }
+           
 
             switch (TipoDocumento)
             {
@@ -930,9 +945,9 @@ namespace FacturadorBL
                     //+ " </cac:DespatchDocumentReference> ";
                     break;
                 case "B":
-                    // xmlNacional = xmlNacional
-                    //+ " <cbc:DocumentCurrencyCode>"
-                    //+ Fact.TipMone + "</cbc:DocumentCurrencyCode> ";//Tipo Moneda
+                   // xmlNacional = xmlNacional
+                   //+ " <cbc:DocumentCurrencyCode>"
+                   //+ Fact.TipMone + "</cbc:DocumentCurrencyCode> ";//Tipo Moneda
                     break;
                 case "NC":
                 case "ND":
@@ -950,65 +965,40 @@ namespace FacturadorBL
                     + "</cac:InvoiceDocumentReference>"
                     + "</cac:BillingReference>";
                     break;
-
                 case "GR":
-                    //Despatch Advice. Order Reference
-                    //A reference to an Order with which this Despatch Advice is associated.		
-                    //Se usa para asignar un gu�a dada de baja - Gu�a de Remisi�n dada de Baja 
-                    // Cat�logo N� 01 debe ser = 09 -->
-                    xmlNacional = xmlNacional
-                        //<#if idDocBaja??>
-                    + "<cac:OrderReference>"
-                        //+ "<cbc:ID>${idDocBaja}</cbc:ID>"
-                    + "<cbc:ID>T001-8</cbc:ID>"
+                      //Despatch Advice. Order Reference
+                      //A reference to an Order with which this Despatch Advice is associated.		
+                      //Se usa para asignar un gu�a dada de baja - Gu�a de Remisi�n dada de Baja 
+                      // Cat�logo N� 01 debe ser = 09 -->
+                      xmlNacional = xmlNacional
+                      //<#if idDocBaja??>
+                      + "<cac:OrderReference>"
+
+                      //+ "<cbc:ID>${idDocBaja}</cbc:ID>"
+                      + "<cbc:ID>T001-8</cbc:ID>"   
+                   
                         //<cbc:SalesOrderID>CON0095678</cbc:SalesOrderID>
                         //+ "<cbc:UUID>6E09886B-DC6E-439F-82D1-7CCAC7F4E3B1</cbc:UUID>"
                         //+ "<cbc:IssueDate>2005-06-20</cbc:IssueDate>"
-
-                      // (GUIA (OrderTypeCode)= OPCIONAL)
-                        //+ "<cbc:OrderTypeCode name='${tipDocBaja}'>${codTipDocBaja}</cbc:OrderTypeCode>"
-                    + "<cbc:OrderTypeCode>09</cbc:OrderTypeCode>"
-                    + "</cac:OrderReference>";
-                    break;
-            }
-
-            switch (TipoDocumento)
-            {
-
-                case "GR":
-                    // Cabecera - Documento Adicional Relacionado
-
-                    //<#list listaDocRelacionado as docRelacionado> 
-                    //<#if docRelacionado.numDocRel??>
-                    //   xmlNacional = xmlNacional
-                    //+ "<cac:AdditionalDocumentReference>"
-                    ////+ "<cbc:ID>${docRelacionado.numDocRel}</cbc:ID>"
-                    //+ "<cbc:ID>T001-8</cbc:ID>"
-                    ////+ "<cbc:DocumentTypeCode>${docRelacionado.codTipDocRel}</cbc:DocumentTypeCode>"
-                    //+ "<cbc:DocumentTypeCode>06</cbc:DocumentTypeCode>"                    
-                    //+ "</cac:AdditionalDocumentReference>";
+                        
+                        // (GUIA (OrderTypeCode)= OPCIONAL)
+                      //+ "<cbc:OrderTypeCode name='${tipDocBaja}'>${codTipDocBaja}</cbc:OrderTypeCode>"
+                      + "<cbc:OrderTypeCode>09</cbc:OrderTypeCode>"                      
+                      + "</cac:OrderReference>";
                     break;
 
+                 
             }
+
 
             xmlNacional = xmlNacional
-                //Informacion adicional de Firma
+             //Informacion adicional de Firma
            + "<cac:Signature>"
            + "<cbc:ID>" + Fact.SerieDocu + "-" + Fact.NumeroDocu + "</cbc:ID> " //Preguntar el campo
-           + "<cac:SignatoryParty>";
-
-            switch (TipoDocumento)
-            {
-                case "F":
-                case "NC":
-                case "B":
-                case "GR":
-                    xmlNacional = xmlNacional
-                    + "<cac:PartyIdentification>"
-                    + "<cbc:ID>" + Fact.RucDocu_emp + "</cbc:ID>"
-                    + "</cac:PartyIdentification>";
-                    break;
-            }
+           + "<cac:SignatoryParty>"
+           + "<cac:PartyIdentification>"
+           + "<cbc:ID>" + Fact.RucDocu_emp + "</cbc:ID>"
+           + "</cac:PartyIdentification>";
             xmlNacional = xmlNacional
             + "<cac:PartyName >"
             + "<cbc:Name>" + Fact.Razon_Social_Emp + "</cbc:Name>"
@@ -1023,51 +1013,56 @@ namespace FacturadorBL
 
 
             // ====  PROVEEDOR  ==== 
-            switch (TipoDocumento)
-            {
+            switch(TipoDocumento){
                 case "GR":
                     {
                         //Cabecera - Datos del Remitente
-                        xmlNacional = xmlNacional
-                       + "<cac:DespatchSupplierParty>"
-                       + "<cbc:CustomerAssignedAccountID schemeID='6'>20262520243</cbc:CustomerAssignedAccountID>"
-                       + "<cbc:AdditionalAccountID/>"
-                       + "<cac:Party>"
-                       + "<cac:PartyName>"
-                       + "<cbc:Name><![CDATA[" + Fact.Nombre_Comercial_Emp + "]]></cbc:Name>"
-                       + "</cac:PartyName>"
-                       + "<cac:PartyLegalEntity>"
-                       + "<cbc:RegistrationName><![CDATA[" + Fact.Nombre_Comercial_Emp + "]]></cbc:RegistrationName>"
-                       + "</cac:PartyLegalEntity>"
-                       + "</cac:Party>"
-                       + "</cac:DespatchSupplierParty>";
+                        //Numero de documento de identidad del remitente
+                        //Tipo de documento de identidad del remitente
+                        //Apellidos y nombres, denominaci�n o raz�n social del remitente 
+                        //Despatch Advice. Despatch_ Supplier Party. Supplier Party 
+                         xmlNacional = xmlNacional
+                        + "<cac:DespatchSupplierParty>"
+                        + "<cbc:CustomerAssignedAccountID schemeID='6'>20262520243</cbc:CustomerAssignedAccountID>"
+                        + "<cbc:AdditionalAccountID/>"
+                        + "<cac:Party>"
+                        + "<cac:PartyName>"
+                        + "<cbc:Name><![CDATA[" + Fact.Nombre_Comercial_Emp + "]]></cbc:Name>"
+                        + "</cac:PartyName>"
+                        + "<cac:PartyLegalEntity>"
+                        + "<cbc:RegistrationName><![CDATA[" + Fact.Nombre_Comercial_Emp + "]]></cbc:RegistrationName>"
+                        + "</cac:PartyLegalEntity>"
+                        + "</cac:Party>"
+                        + "</cac:DespatchSupplierParty>";
                         break;
-
+                    
                     }
                 case "B":
                 case "F":
                 case "NC":
                     xmlNacional = xmlNacional
-                    + "<cac:AccountingSupplierParty>"
-                    + "<cac:Party>"
+                  + "<cac:AccountingSupplierParty>"
+                  + "<cbc:CustomerAssignedAccountID>" + Fact.NumeroDocu + "</cbc:CustomerAssignedAccountID>"
+                  + "<cbc:AdditionalAccountID>6</cbc:AdditionalAccountID>"
+                  + "<cac:Party>"
                         // No aparece en ubl 2.1 //
-                    + "<cac:PartyIdentification>"
-                    + "<cbc:ID schemeAgencyName='PE:SUNAT' schemeID='6'  schemeName='Documento de Identidad' schemeURI='urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo06'>" + Fact.RucDocu_emp + "</cbc:ID>"
-                    + "</cac:PartyIdentification>";
+                  + "<cac:PartyIdentification>"
+                  + "<cbc:ID schemeAgencyName='PE:SUNAT' schemeID='6'  schemeName='Documento de Identidad' schemeURI='urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo06'>" + Fact.RucDocu_emp + "</cbc:ID>"
+                  + "</cac:PartyIdentification>"; 
                     break;
-
                 case "ND":
                     xmlNacional = xmlNacional
-                    + "<cac:AccountingSupplierParty>"
-                    + "<cac:Party>"
-                    + "<cac:PartyIdentification>"
-                    + "<cbc:ID schemeAgencyName='PE:SUNAT' schemeID='6'  schemeName='Documento de Identidad' schemeURI='urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo06'>" + Fact.RucDocu_emp + "</cbc:ID>"
-                    + "</cac:PartyIdentification>"; //Nota de credito (10) Datos del Emisor  - Ruc
-                    break;
-
+                + "<cac:AccountingSupplierParty>"
+                + "<cac:Party>"
+                + "<cac:PartyIdentification>"
+                + "<cbc:ID schemeAgencyName='PE:SUNAT' schemeID='6'  schemeName='Documento de Identidad' schemeURI='urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo06'>" + Fact.RucDocu_emp + "</cbc:ID>"
+                + "</cac:PartyIdentification>"; //Nota de credito (10) Datos del Emisor  - Ruc
+                  
+                break;
+                
             }
 
-
+            
 
             switch (TipoDocumento)
             {
@@ -1086,7 +1081,7 @@ namespace FacturadorBL
                     + "<cbc:CountrySubentityCode/>"
                     + "<cbc:District/>"
                     + "<cac:AddressLine>"
-                        // VERIFICAR DIRECCIÓN ESTABLECIDA
+                      // VERIFICAR DIRECCIÓN ESTABLECIDA
                     + "<cbc:Line><![CDATA[AV. LUNA PIZARRO 336 URB. TEJADA ALTA A 1/2 CDRA. DE OVALO DE BALTA]]></cbc:Line>"
                     + "</cac:AddressLine>"
                     + "<cac:Country>"
@@ -1097,33 +1092,35 @@ namespace FacturadorBL
                     break;
                 case "B":
                 case "NC":
-                case "ND":
+                case "ND" :
                     xmlNacional = xmlNacional
                    + "<cac:PartyName>"
-                   + "<cbc:Name><![CDATA[" + Fact.Nombre_Comercial_Emp + "]]></cbc:Name>"
+                   + "<cbc:Name><![CDATA[" + Fact.Nombre_Comercial_Emp + "]]></cbc:Name>"  //11.- NOTA DE DEBITO  Nombre Comercial (Emisor)
                    + "</cac:PartyName>"
                    + "<cac:PartyLegalEntity>"
-                   + "<cbc:RegistrationName><![CDATA[" + Fact.Razon_Social_Emp + "]]></cbc:RegistrationName>"
+                   + "<cbc:RegistrationName><![CDATA[" + Fact.Razon_Social_Emp + "]]></cbc:RegistrationName>"// 12 Obligatorio .- razón social o Apellido Nombre 
                    + "<cac:RegistrationAddress>"
                    + "<cbc:ID>150101</cbc:ID>"
-                   + "<cbc:AddressTypeCode listAgencyName='PE:SUNAT' listName='Establecimientos anexos'>0</cbc:AddressTypeCode>"// PORQ 0
+                 //  + "<cbc:BuildingNumber />"
+                 + "<cbc:AddressTypeCode>0</cbc:AddressTypeCode>"//Codigo asignado por sunat para el establecimiento anexo declarado en el ruc 14 (Obligatorio)
                    + "<cbc:CitySubdivisionName>-</cbc:CitySubdivisionName>"
                    + "<cbc:CityName><![CDATA[LIMA]]></cbc:CityName>"
                    + "<cbc:CountrySubentity><![CDATA[LIMA]]></cbc:CountrySubentity>"
+                  // + "<cbc:CountrySubentityCode><![CDATA[150104]]></cbc:CountrySubentityCode>"
                    + "<cbc:District><![CDATA[BARRANCO]]></cbc:District>"
                    + "<cac:AddressLine>"
-                   + "<cbc:Line><![CDATA[" + Fact.Direccion_Empresa + "]]></cbc:Line>"
+                   + "<cbc:Line><![CDATA[" + Fact.Direccion_Empresa + "]]></cbc:Line>" //Direccion emisor
                    + "</cac:AddressLine>"
                    + "<cac:Country>"
                    + "<cbc:IdentificationCode>PE</cbc:IdentificationCode>"
                    + "</cac:Country>"
                    + "</cac:RegistrationAddress>"
                    + "</cac:PartyLegalEntity>";
-                    break;
+                    break;                  
 
             }
 
-            //Si los Campos son vacios colocar (-) _ (codigo documento identidad)
+            //Si los Campos vacion colocar - (codigo documento identidad)
             if (string.IsNullOrEmpty(Fact.NumerodocumenIdenti))
             {
                 Fact.NumerodocumenIdenti = "-";
@@ -1136,43 +1133,47 @@ namespace FacturadorBL
                 case "F":
                 case "NC":
                 case "ND":
-                    xmlNacional = xmlNacional
-                    + "</cac:Party>"
-                    + "</cac:AccountingSupplierParty>"
+                        xmlNacional = xmlNacional
+                        + "</cac:Party>"
+                        + "</cac:AccountingSupplierParty>"
                         //=======================================================
                         //======================  CLIENTE  ====================== 
-                    + "<cac:AccountingCustomerParty>"
-                    + "<cac:Party>"
-                    + "<cac:PartyIdentification>"
-                        // schemeID='" + Fact.Cod_Docu_identi.Trim() + "'
-                    + "<cbc:ID schemeAgencyName='PE:SUNAT' schemeID='-' schemeName='Documento de Identidad' schemeURI='urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo06'>" + Fact.NumerodocumenIdenti + "</cbc:ID>" //Si los Campos vacion colocar -
-                    + "</cac:PartyIdentification>"
-                    + "<cac:PartyLegalEntity>"
-                    + "<cbc:RegistrationName><![CDATA[" + Fact.Nombre_Comercial_Cli + "]]></cbc:RegistrationName>"
-                    + "</cac:PartyLegalEntity>"
-                    + "</cac:Party>"
-                    + "</cac:AccountingCustomerParty>";
-                    break;
+                        + "<cac:AccountingCustomerParty>"
+                        + "<cac:Party>"
+                        + "<cac:PartyIdentification>"
+                           // schemeID='" + Fact.Cod_Docu_identi.Trim() + "'
+                        + "<cbc:ID schemeAgencyName='PE:SUNAT' schemeID='-' schemeName='Documento de Identidad' schemeURI='urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo06'>" + Fact.NumerodocumenIdenti + "</cbc:ID>" //Tipo y numero de documento de identidad del cliente o receptor (Obligatorio) 
+                        + "</cac:PartyIdentification>"
+                        + "<cac:PartyLegalEntity>"
+                        + "<cbc:RegistrationName><![CDATA[" + Fact.Nombre_Comercial_Cli + "]]></cbc:RegistrationName>" // Razon social  del cliente (Nota de debito 16) 
+                        + "</cac:PartyLegalEntity>"
+                        + "</cac:Party>"
+                        + "</cac:AccountingCustomerParty>";
+                        break;
 
                 case "GR":
-                    // Cabecera - Datos del Destinatario
-                    xmlNacional = xmlNacional
-                    + "<cac:DeliveryCustomerParty>"
-                    + "<cbc:CustomerAssignedAccountID schemeID='6'>10209865209</cbc:CustomerAssignedAccountID>"
-                    + "<cbc:AdditionalAccountID/>"
-                    + "<cac:Party>"
-                    + "<cac:PartyName>"
-                    + "<cbc:Name><![CDATA[" + Fact.Nombre_Comercial_Cli + "]]></cbc:Name>"
-                    + "</cac:PartyName>"
-                    + "<cac:PartyLegalEntity>"
-                    + "<cbc:RegistrationName><![CDATA[" + Fact.Razon_Social_Cli + "]]></cbc:RegistrationName>"
-                    + "</cac:PartyLegalEntity>"
-                    + "</cac:Party>"
-                    + "</cac:DeliveryCustomerParty>";
-                    break;
+                        //<!-- Cabecera - Datos del Destinatario
+                        //Numero de documento de identidad del destinatario
+                        //Tipo de documento de identidad
+                        //Apellidos y nombres, denominaci�n o raz�n social del destinatario 
+                        //Despatch Advice. Delivery_ Customer Party. Customer Party -->
+                        xmlNacional = xmlNacional
+                        + "<cac:DeliveryCustomerParty>"
+                        + "<cbc:CustomerAssignedAccountID schemeID='6'>10209865209</cbc:CustomerAssignedAccountID>"
+                        + "<cbc:AdditionalAccountID/>"
+                        + "<cac:Party>"
+                        + "<cac:PartyName>"
+                        + "<cbc:Name><![CDATA[" + Fact.Nombre_Comercial_Cli  + "]]></cbc:Name>"
+                        + "</cac:PartyName>"
+                        + "<cac:PartyLegalEntity>"
+                        + "<cbc:RegistrationName><![CDATA[" + Fact.Razon_Social_Cli + "]]></cbc:RegistrationName>"
+                        + "</cac:PartyLegalEntity>"
+                        + "</cac:Party>"
+                        + "</cac:DeliveryCustomerParty>";
+                        break;
             }
-
-
+            
+            
 
             switch (TipoDocumento)
             {
@@ -1204,7 +1205,7 @@ namespace FacturadorBL
                         // Impuesto tributo (ICBPER) Bolsas -----
                             + "<cac:TaxTotal>"
                             + "<cbc:TaxAmount currencyID='" + Fact.TipMone + "'>" + (Fact.Igv + Fact.ImporteBolsa).ToString() + "</cbc:TaxAmount>"
-                        //+ "<cbc:TaxAmount currencyID='" + Fact.TipMone + "'>" + String.Format("{0:0.00}", Fact.SubTotal) + "</cbc:TaxAmount>"//<cbc:TaxAmount currencyID="PEN">3.05</cbc:TaxAmount> //Nota el valor por defecto 3.05
+                            //+ "<cbc:TaxAmount currencyID='" + Fact.TipMone + "'>" + String.Format("{0:0.00}", Fact.SubTotal) + "</cbc:TaxAmount>"//<cbc:TaxAmount currencyID="PEN">3.05</cbc:TaxAmount> //Nota el valor por defecto 3.05
 
                         // Fin Impuesto tributo 
 
@@ -1235,7 +1236,7 @@ namespace FacturadorBL
                             + "</cac:TaxSubtotal>"
 
                             //IGV
-                        //  + "<cbc:TaxAmount currencyID='" + Fact.TipMone + "'>" + String.Format("{0:0.00}", Fact.SubTotal) + "</cbc:TaxAmount>"//<cbc:TaxAmount currencyID="PEN">3.05</cbc:TaxAmount> //Nota el valor por defecto 3.05
+                          //  + "<cbc:TaxAmount currencyID='" + Fact.TipMone + "'>" + String.Format("{0:0.00}", Fact.SubTotal) + "</cbc:TaxAmount>"//<cbc:TaxAmount currencyID="PEN">3.05</cbc:TaxAmount> //Nota el valor por defecto 3.05
                             + "<cac:TaxSubtotal>"
                             + "<cbc:TaxableAmount currencyID='" + Fact.TipMone + "'>" + String.Format("{0:0.00}", Fact.SubTotal) + "</cbc:TaxableAmount>"//<cbc:TaxAmount currencyID="PEN">3.05</cbc:TaxAmount> //Nota el valor por defecto 3.05
                             + "<cbc:TaxAmount currencyID='" + Fact.TipMone + "'>" + String.Format("{0:0.00}", Fact.Igv) + "</cbc:TaxAmount>"
@@ -1252,17 +1253,17 @@ namespace FacturadorBL
 
                                 // OTROS TRIBUTOS
                         // + "<cac:TaxTotal>"
-                        //+ "<cbc:TaxAmount currencyID='" + Fact.TipMone + "'>0.00</cbc:TaxAmount>"
-                        //+ "<cac:TaxSubtotal>"
-                        //+ "<cbc:TaxAmount currencyID='" + Fact.TipMone + "'>0.00</cbc:TaxAmount>"
-                        //+ "<cac:TaxCategory>"
-                        //+ "<cac:TaxScheme>"
-                        //+ "<cbc:ID>9999</cbc:ID>"
-                        //+ "<cbc:Name>OTROS TRIBUTOS</cbc:Name>"
-                        //+ "<cbc:TaxTypeCode>OTH</cbc:TaxTypeCode>"
-                        //+ "</cac:TaxScheme>"
-                        //+ "</cac:TaxCategory>"
-                        //+ "</cac:TaxSubtotal>"
+                            //+ "<cbc:TaxAmount currencyID='" + Fact.TipMone + "'>0.00</cbc:TaxAmount>"
+                            //+ "<cac:TaxSubtotal>"
+                            //+ "<cbc:TaxAmount currencyID='" + Fact.TipMone + "'>0.00</cbc:TaxAmount>"
+                            //+ "<cac:TaxCategory>"
+                            //+ "<cac:TaxScheme>"
+                            //+ "<cbc:ID>9999</cbc:ID>"
+                            //+ "<cbc:Name>OTROS TRIBUTOS</cbc:Name>"
+                            //+ "<cbc:TaxTypeCode>OTH</cbc:TaxTypeCode>"
+                            //+ "</cac:TaxScheme>"
+                            //+ "</cac:TaxCategory>"
+                            //+ "</cac:TaxSubtotal>"
                             + "</cac:TaxTotal>";
                     break;
 
@@ -1278,7 +1279,6 @@ namespace FacturadorBL
                         + "<cac:TaxSubtotal>"
                         + "<cbc:TaxableAmount currencyID='" + Fact.TipMone + "'>" + String.Format("{0:0.00}", Fact.SubTotal) + "</cbc:TaxableAmount>"
                         + "<cbc:TaxAmount currencyID='" + Fact.TipMone + "'>0.00</cbc:TaxAmount>";
-
                     }
                     else if (Fact.SerieDocu.Substring(0, 1).Equals("B")) // Boleta
                     {
@@ -1322,65 +1322,66 @@ namespace FacturadorBL
 
             }
 
-
-
-            switch (TipoDocumento)
+            
+            
+             switch (TipoDocumento)
             {
                 case "B":
-                    xmlNacional = xmlNacional
-                    + " <cac:LegalMonetaryTotal>"
-                    + "<cbc:LineExtensionAmount currencyID='" + Fact.TipMone + "'>" + String.Format("{0:0.00}", Fact.SubTotal) + "</cbc:LineExtensionAmount>";
-
+                     xmlNacional = xmlNacional
+                     + " <cac:LegalMonetaryTotal>"
+                     + "<cbc:LineExtensionAmount currencyID='" + Fact.TipMone + "'>" + String.Format("{0:0.00}", Fact.SubTotal)  + "</cbc:LineExtensionAmount>";
+              
+                     break;
+               case "F":
+                     xmlNacional = xmlNacional
+                     + " <cac:LegalMonetaryTotal>"
+                     + "<cbc:LineExtensionAmount currencyID='" + Fact.TipMone + "'>" + String.Format("{0:0.00}", Fact.Total)  + "</cbc:LineExtensionAmount>";
                     break;
-                case "F":
                     xmlNacional = xmlNacional
-                    + " <cac:LegalMonetaryTotal>"
-                    + "<cbc:LineExtensionAmount currencyID='" + Fact.TipMone + "'>" + String.Format("{0:0.00}", Fact.Total) + "</cbc:LineExtensionAmount>";
-                    break;
+                    +"</cac:LegalMonetaryTotal>";
             }
 
 
-            // "<!-- Cabecera - Despatch Advice. TIENDA - Seller_ Supplier - Proveedor Remitente - Party. Supplier Party -->"
-            switch (TipoDocumento)
-            {
+             // "<!-- Cabecera - Despatch Advice. TIENDA - Seller_ Supplier - Proveedor Remitente - Party. Supplier Party -->"
+            switch(TipoDocumento)
+            {              
+  
+                    //+ "<cac:PartyIdentification>"
+                    //+ "<cbc:ID schemeAgencyName='PE:SUNAT' schemeID='6'  schemeName='Documento de Identidad' schemeURI='urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo06'>" + Fact.RucDocu_emp + "</cbc:ID>"
+                    //+ "</cac:PartyIdentification>";
+                case "GR":                    
+                        xmlNacional = xmlNacional
+                        + "<cac:SellerSupplierParty>"
 
-                //+ "<cac:PartyIdentification>"
-                //+ "<cbc:ID schemeAgencyName='PE:SUNAT' schemeID='6'  schemeName='Documento de Identidad' schemeURI='urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo06'>" + Fact.RucDocu_emp + "</cbc:ID>"
-                //+ "</cac:PartyIdentification>";
-                case "GR":
-                    xmlNacional = xmlNacional
-                    + "<cac:SellerSupplierParty>"
-
-                    //+ "<cbc:CustomerAssignedAccountID schemeID='${tipDocProveedor}'>${numDocProveedor}</cbc:CustomerAssignedAccountID>"
-                    + "<cbc:CustomerAssignedAccountID schemeID='6'>" + Fact.RucDocu_emp + "</cbc:CustomerAssignedAccountID>"
-
-                    + "<cbc:AdditionalAccountID/>"
-                    + "<cac:Party>"
-                    + "<cac:PartyName>"
-                    + "<cbc:Name>" + Fact.Nombre_Comercial_Emp + "</cbc:Name>"
-                    + "</cac:PartyName>"
-                    + "<cac:PartyLegalEntity>"
-                    + "<cbc:RegistrationName>" + Fact.Razon_Social_Emp + "</cbc:RegistrationName>"
-                    + "</cac:PartyLegalEntity>"
-                    + "</cac:Party>"
-                    + "</cac:SellerSupplierParty>";
-                    break;
+                        //+ "<cbc:CustomerAssignedAccountID schemeID='${tipDocProveedor}'>${numDocProveedor}</cbc:CustomerAssignedAccountID>"
+                        + "<cbc:CustomerAssignedAccountID schemeID='6'>" + Fact.RucDocu_emp + "</cbc:CustomerAssignedAccountID>"
+                                                
+                        + "<cbc:AdditionalAccountID/>"
+                        + "<cac:Party>"
+                        + "<cac:PartyName>"
+                        + "<cbc:Name>" + Fact.Nombre_Comercial_Emp + "</cbc:Name>"
+                        + "</cac:PartyName>"
+                        + "<cac:PartyLegalEntity>"
+                        + "<cbc:RegistrationName>" + Fact.Razon_Social_Emp + "</cbc:RegistrationName>"
+                        + "</cac:PartyLegalEntity>"
+                        + "</cac:Party>"
+                        + "</cac:SellerSupplierParty>";
+                     break;
             }
 
             switch (TipoDocumento)
-            {
-
+            { 
+           
                 case "ND":
                     xmlNacional = xmlNacional
                     + "<cac:RequestedMonetaryTotal>";
                     break;
             }
-
-            switch (TipoDocumento)
-            {
+            
+            switch(TipoDocumento){
                 case "B":
                 case "F":
-                case "NC":
+                case "NC" :
                     xmlNacional = xmlNacional
                         //(AllowanceTotalAmount) Monto total de descuentos del comprobante 
                     + "<cbc:AllowanceTotalAmount currencyID='" + Fact.TipMone + "'>" + String.Format("{0:0.00}", Fact.Descu) + "</cbc:AllowanceTotalAmount>"
@@ -1390,8 +1391,8 @@ namespace FacturadorBL
 
                     //(PrepaidAmount) Monto total de anticipos del comprobante         // falta modificar
                     + "<cbc:PrepaidAmount currencyID='" + Fact.TipMone + "'>0.00</cbc:PrepaidAmount>"
-                    + "<cbc:PayableAmount currencyID='" + Fact.TipMone + "'>" + String.Format("{0:0.00}", Fact.Total) + "</cbc:PayableAmount>"
-                    + "</cac:LegalMonetaryTotal>";
+                    + "<cbc:PayableAmount currencyID='" + Fact.TipMone + "'>" + String.Format("{0:0.00}", Fact.Total) + "</cbc:PayableAmount>";
+                    
                     break;
                 case "ND":
                     xmlNacional = xmlNacional
@@ -1399,12 +1400,12 @@ namespace FacturadorBL
                     + "<cbc:TaxExclusiveAmount currencyID='" + Fact.TipMone + "'>0.00</cbc:TaxExclusiveAmount>"
                     + "<cbc:ChargeTotalAmount currencyID='" + Fact.TipMone + "'>0.00</cbc:ChargeTotalAmount>"
                     + "<cbc:PayableAmount currencyID='" + Fact.TipMone + "'>" + String.Format("{0:0.00}", Fact.Total) + "</cbc:PayableAmount>";
+
                     break;
             }
 
             //<!-- Cabecera - Datos del Env�o -->
-            switch (TipoDocumento)
-            {
+            switch(TipoDocumento){
                 case "GR":
                     //<!-- Cabecera - Datos del Env�o -->
                     xmlNacional = xmlNacional
@@ -1412,32 +1413,32 @@ namespace FacturadorBL
                     + "<cbc:ID>1</cbc:ID>"
 
                     //<!-- Datos del Envio - Motivo de Traslado -->(Cat_#20)
-                        //+ "<cbc:HandlingCode>${motTrasladoDatosEnvio}</cbc:HandlingCode>"
+                    //+ "<cbc:HandlingCode>${motTrasladoDatosEnvio}</cbc:HandlingCode>"
                     + "<cbc:HandlingCode>01</cbc:HandlingCode>"
 
 
                     //<!-- Datos del Env�o - Descripcion del motive del traslado --> Information == (OPCIONAL)
                     + "<cbc:Information>traslado de paquetes</cbc:Information>"
-                        //<!-- Datos del Env�o - Peso bruto total de la gu�a -->
-                        //GrossWeightMeasure
-                        //+ "<cbc:GrossWeightMeasure unitCode='${uniMedidaPesoBrutoDatosEnvio}'>${psoBrutoTotalBienesDatosEnvio}</cbc:GrossWeightMeasure>"
+                    //<!-- Datos del Env�o - Peso bruto total de la gu�a -->
+                    //GrossWeightMeasure
+                    //+ "<cbc:GrossWeightMeasure unitCode='${uniMedidaPesoBrutoDatosEnvio}'>${psoBrutoTotalBienesDatosEnvio}</cbc:GrossWeightMeasure>"
                     + "<cbc:GrossWeightMeasure unitCode='KG'>16.500</cbc:GrossWeightMeasure>"
-                        //<!-- Datos del Env�o - Numero de bultos o pallets - Enteros-->
-                        // #if numBultosDatosEnvio?? && numBultosDatosEnvio != "-" && numBultosDatosEnvio != "" 
-                        //+ "<cbc:TotalTransportHandlingUnitQuantity>${numBultosDatosEnvio}</cbc:TotalTransportHandlingUnitQuantity>"
-
+                    //<!-- Datos del Env�o - Numero de bultos o pallets - Enteros-->
+	                // #if numBultosDatosEnvio?? && numBultosDatosEnvio != "-" && numBultosDatosEnvio != "" 
+                    //+ "<cbc:TotalTransportHandlingUnitQuantity>${numBultosDatosEnvio}</cbc:TotalTransportHandlingUnitQuantity>"
+                    
                     // TotalTransportHandlingUnitQuantity ==== OPCIONAL
                     + "<cbc:TotalTransportHandlingUnitQuantity>3</cbc:TotalTransportHandlingUnitQuantity>"
-
+                    
                     //</#if>
-                        //<!-- Datos del Env�o - Indicador del transbordo programado -->
-                        //+ "<cbc:SplitConsignmentIndicator>${indTransbordoProgDatosEnvio}</cbc:SplitConsignmentIndicator>"
+                    //<!-- Datos del Env�o - Indicador del transbordo programado -->
+                    //+ "<cbc:SplitConsignmentIndicator>${indTransbordoProgDatosEnvio}</cbc:SplitConsignmentIndicator>"
                     + "<cbc:SplitConsignmentIndicator>true</cbc:SplitConsignmentIndicator>"
 
                     + "<cac:Consignment>"
                     + "<cbc:ID>001</cbc:ID>"
                     + "</cac:Consignment>"
-                        //<!-- Datos del Env�o - Per�odo de embarque -->
+                    //<!-- Datos del Env�o - Per�odo de embarque -->
                     + "<cac:ShipmentStage>"
                         + "<cbc:ID>1</cbc:ID>"
                         //<!-- Datos del Env�o - Embarque - Modalidad del traslado -->
@@ -1452,7 +1453,7 @@ namespace FacturadorBL
 
                         //+ "<cbc:StartDate>${fecInicioTrasladoDatosEnvio}</cbc:StartDate>"
                         + "<cbc:StartDate>2015-10-23</cbc:StartDate>"
-
+                        
                         + "</cac:TransitPeriod>"
 
                         //====== TRANSPORTE PUBLICO ======
@@ -1489,9 +1490,9 @@ namespace FacturadorBL
 
                         + "</cac:DriverPerson>"
                     + "</cac:ShipmentStage>"
-                        //<!-- Datos del Envio - Entrega -->
+                    //<!-- Datos del Envio - Entrega -->
                     + "<cac:Delivery>"
-                        //<!-- Entrega - Direcci�n -->
+                    //<!-- Entrega - Direcci�n -->
                     + "<cac:DeliveryAddress>"
 
                     //+ "<cbc:ID>${ubiLlegada}</cbc:ID>"
@@ -1509,22 +1510,22 @@ namespace FacturadorBL
 
                     //+ "<cbc:ID>${numContenedor}</cbc:ID>"
                     + "<cbc:ID>120606</cbc:ID>"
-
+                    
                     + "</cac:TransportEquipment>"
                     + "</cac:TransportHandlingUnit>"
 
                     //<!-- Datos del Envio - Direcci�n Origen -->
                     + "<cac:OriginAddress>"
-                        //+ "<cbc:ID>${ubiPartida}</cbc:ID>"
+                    //+ "<cbc:ID>${ubiPartida}</cbc:ID>"
                     + "<cbc:ID>150123</cbc:ID>"
-                        //+ "<cbc:StreetName>${dirPartida}</cbc:StreetName>"
+                    //+ "<cbc:StreetName>${dirPartida}</cbc:StreetName>"
                     + "<cbc:StreetName><![CDATA[CAR. PANAM SUR KM 25 NO. 25050 NRO. 050 Z.I. CONCHAN]]></cbc:StreetName>"
                     + "</cac:OriginAddress>"
 
                     //<!-- Datos del Envio - codigo del puerto -->
                     + "<cac:FirstArrivalPortLocation>"
-                        //+ "<cbc:ID>${codPuerto}</cbc:ID>"
-                    + "<cbc:ID>PAI</cbc:ID>"
+                    //+ "<cbc:ID>${codPuerto}</cbc:ID>"
+                    + "<cbc:ID>PAI</cbc:ID>"                    
                     + "</cac:FirstArrivalPortLocation>"
 
                     + "</cac:Shipment>";
@@ -1539,8 +1540,8 @@ namespace FacturadorBL
                     break;
             }
 
-            switch (TipoDocumento)
-            {
+
+            switch(TipoDocumento){
                 case "B":
                 case "F":
                     xmlNacional = xmlNacional
@@ -1550,10 +1551,11 @@ namespace FacturadorBL
                     xmlNacional = xmlNacional
                    + "</DebitNote>";
                     break;
+                    
                 case "NC":
                     xmlNacional = xmlNacional
                     + "</CreditNote>";
-                    break;
+                    break;  
                 case "GR":
                     xmlNacional = xmlNacional
                     + "</DespatchAdvice>";
@@ -1563,7 +1565,7 @@ namespace FacturadorBL
 
             //---------------------------------------------------------------------------
             // --------------------------------  DETALLE -------------------------------- 
-
+            
             try
             {
 
@@ -1606,878 +1608,1031 @@ namespace FacturadorBL
             catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
-                MessageBox.Show(ex.Message);
-                errorXml.Add(NombreArchivo + "-" + ex.Message);
             }
 
 
             // ****************************** DETALLE ****************************************
-            String xmlString = System.IO.File.ReadAllText(ConfigurationManager.AppSettings["XmlMain"] + "/" + NombreArchivoXml);
+            String xmlString = System.IO.File.ReadAllText(ConfigurationManager.AppSettings["RutaXml"] + "/" + NombreArchivoXml);
             XmlDocument doc2 = new XmlDocument();
             doc2.PreserveWhitespace = true;
 
             //CARGAR TEXTO XML EN VARIABLE DOC2
-
-            // |||||||||||||||||||||||||  INICIO TRY CATCH == XML   ||||||||||||||||||||||||||||||||||||||
             try
             {
                 doc2.LoadXml(xmlString);
+            }
+            catch (System.IO.FileNotFoundException f)
+            {
+                Console.Out.WriteLine(f.Message);
+            }
+            
+            String l_xdet = "";
+
+            
+            switch (TipoDocumento)
+            {
+                case "F":
+                case "B":
+                    l_xdet = "/tns:Invoice";
+                    break;
+                case "NC":
+                    l_xdet = "/tns:CreditNote";
+                    break;
+                case "ND":
+                    l_xdet = "/tns:DebitNote";
+                    break;
+                case "GR":
+                    l_xdet = "/tns:DespatchAdvice";
+                    break;
+            }
+
+            XmlNamespaceManager ns = new XmlNamespaceManager(doc2.NameTable);
+            if (TipoDocumento.Equals("NC")) {
+                ns.AddNamespace("tns", "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2");
+            }
+            else if (TipoDocumento.Equals("ND"))
+            {
+                ns.AddNamespace("tns", "urn:oasis:names:specification:ubl:schema:xsd:DebitNote-2");
+            }
+            else if (TipoDocumento.Equals("GR"))
+            {
+                ns.AddNamespace("tns", "urn:oasis:names:specification:ubl:schema:xsd:DespatchAdvice-2");
+            }
+            else
+            {
+                ns.AddNamespace("tns", "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2");
+            }
+            ns.PushScope();
+            ns.AddNamespace("ext", "urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2");
+            ns.PushScope();
+            ns.AddNamespace("cac", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
+            ns.PushScope();
+            ns.AddNamespace("udt", "urn:un:unece:uncefact:data:specification:UnqualifiedDataTypesSchemaModule:2");
+            ns.PushScope();
+            ns.AddNamespace("qdt", "urn:oasis:names:specification:ubl:schema:xsd:QualifiedDatatypes-2");
+            ns.PushScope();
+            ns.AddNamespace("cbc", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+            ns.PushScope();
+            ns.AddNamespace("ds", "http://www.w3.org/2000/09/xmldsig#");
+            ns.PushScope();
 
 
-                String l_xdet = "";
+            percent = 18.0;
 
+            int cont_b = 1;
+            cont_txt_item = cont_txt_item - 1;
+            while (cont_txt_item >= cont_b)
+            {
+                if (Fact.Cod_tip_ope.Equals("0200"))
+                {
+                    igv_item = 0.00;
+                    percent = 0.00;
+                    ValorUnitario = Math.Round(Convert.ToDouble(ValorVenta_item[cont_b]), 2);
+                }
+                else
+                {
+                    Console.Write(texto_Item.Count());
+
+                    //igv_item = Cantidades[cont_b]; - ERROR COMENTADO
+                    igv_item = 0.00;
+
+                    ValorUnitario = Math.Round(Convert.ToDouble(ValorVenta_item[cont_b]) * 1.18, 2);
+                    ValorUnitario = Convert.ToDouble(ValorVenta_item[cont_b]) * 1.18;
+                    Console.Write(Math.Round(Convert.ToDouble(ValorVenta_item[cont_b]), 2));
+
+                    ValorUnitario = Fact.Total - (ValorUnitario * Cantidades[cont_b]);
+                }
+
+                
+                // ESCRIBIR NUEVOS ELEMENTOS EN XML
+                XmlWriter xmlw = doc2.SelectSingleNode(l_xdet, ns).CreateNavigator().AppendChild();
 
                 switch (TipoDocumento)
                 {
                     case "F":
                     case "B":
-                        l_xdet = "/tns:Invoice";
+                        xmlw.WriteStartElement("InvoiceLine", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
                         break;
                     case "NC":
-                        l_xdet = "/tns:CreditNote";
+                        xmlw.WriteStartElement("CreditNoteLine", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
                         break;
                     case "ND":
-                        l_xdet = "/tns:DebitNote";
+                        xmlw.WriteStartElement("DebitNoteLine", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
                         break;
                     case "GR":
-                        l_xdet = "/tns:DespatchAdvice";
+                        xmlw.WriteStartElement("DespatchLine", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
                         break;
                 }
 
-                XmlNamespaceManager ns = new XmlNamespaceManager(doc2.NameTable);
-                if (TipoDocumento.Equals("NC"))
+                xmlw.WriteElementString("ID", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2", cont_b.ToString());
+
+                
+                switch (TipoDocumento)
                 {
-                    ns.AddNamespace("tns", "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2");
+                    case "F":
+                    case "B":
+                        xmlw.WriteStartElement("InvoicedQuantity", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                        break;
+                    case "NC":
+                        xmlw.WriteStartElement("CreditedQuantity", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                        break;
+                    case "ND":
+                        //"<cbc:LineExtensionAmount currencyID='USD'>0.00</cbc:LineExtensionAmount>"
+           
+                        xmlw.WriteStartElement("DebitedQuantity", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                        break;
+
+
+                    case "GR":
+                        xmlw.WriteStartElement("DeliveredQuantity", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                        break;
                 }
-                else if (TipoDocumento.Equals("ND"))
+
+                switch (TipoDocumento)
                 {
-                    ns.AddNamespace("tns", "urn:oasis:names:specification:ubl:schema:xsd:DebitNote-2");
-                }
-                else if (TipoDocumento.Equals("GR"))
-                {
-                    ns.AddNamespace("tns", "urn:oasis:names:specification:ubl:schema:xsd:DespatchAdvice-2");
-                }
-                else
-                {
-                    ns.AddNamespace("tns", "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2");
-                }
-                ns.PushScope();
-                ns.AddNamespace("ext", "urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2");
-                ns.PushScope();
-                ns.AddNamespace("cac", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
-                ns.PushScope();
-                ns.AddNamespace("udt", "urn:un:unece:uncefact:data:specification:UnqualifiedDataTypesSchemaModule:2");
-                ns.PushScope();
-                ns.AddNamespace("qdt", "urn:oasis:names:specification:ubl:schema:xsd:QualifiedDatatypes-2");
-                ns.PushScope();
-                ns.AddNamespace("cbc", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
-                ns.PushScope();
-                ns.AddNamespace("ds", "http://www.w3.org/2000/09/xmldsig#");
-                ns.PushScope();
-
-
-                percent = 18.0;
-
-                int cont_b = 1;
-                cont_txt_item = cont_txt_item - 1;
-                while (cont_txt_item >= cont_b)
-                {
-                    if (Fact.Cod_tip_ope.Equals("0200"))
-                    {
-                        igv_item = 0.00;
-                        percent = 0.00;
-                        ValorUnitario = Math.Round(Convert.ToDouble(ValorVenta_item[cont_b]), 2);
-                    }
-                    else
-                    {
-                        Console.Write(texto_Item.Count());
-
-                        //igv_item = Cantidades[cont_b]; - ERROR COMENTADO
-                        igv_item = 0.00;
-
-                        ValorUnitario = Math.Round(Convert.ToDouble(ValorVenta_item[cont_b]) * 1.18, 2);
-                        ValorUnitario = Convert.ToDouble(ValorVenta_item[cont_b]) * 1.18;
-                        Console.Write(Math.Round(Convert.ToDouble(ValorVenta_item[cont_b]), 2));
-
-                        ValorUnitario = Fact.Total - (ValorUnitario * Cantidades[cont_b]);
-                    }
-
-
-                    // ESCRIBIR NUEVOS ELEMENTOS EN XML
-                    XmlWriter xmlw = doc2.SelectSingleNode(l_xdet, ns).CreateNavigator().AppendChild();
-
-                    switch (TipoDocumento)
-                    {
-                        case "F":
-                        case "B":
-                            xmlw.WriteStartElement("InvoiceLine", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
-                            break;
-                        case "NC":
-                            xmlw.WriteStartElement("CreditNoteLine", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
-                            break;
-                        case "ND":
-                            xmlw.WriteStartElement("DebitNoteLine", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
-                            break;
-                        case "GR":
-                            xmlw.WriteStartElement("DespatchLine", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
-                            break;
-                    }
-
-                    xmlw.WriteElementString("ID", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2", cont_b.ToString());
-
-                    switch (TipoDocumento)
-                    {
-                        case "F":
-                        case "B":
-                            xmlw.WriteStartElement("InvoicedQuantity", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
-                            break;
-                        case "NC":
-                            xmlw.WriteStartElement("CreditedQuantity", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
-                            break;
-                        case "ND":
-                            //"<cbc:LineExtensionAmount currencyID='USD'>0.00</cbc:LineExtensionAmount>"
-
-                            xmlw.WriteStartElement("DebitedQuantity", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
-                            break;
-                        case "GR":
-                            xmlw.WriteStartElement("DeliveredQuantity", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
-                            break;
-                    }
-
-                    switch (TipoDocumento)
-                    {
-                        case "F":
-                        case "B":
-                        case "NC":
-                        case "ND":
-                            xmlw.WriteAttributeString("unitCode", "NIU");
-                            //xmlw.WriteAttributeString("unitCodeListID", "UN/ECE rec 20");
-                            //xmlw.WriteAttributeString("unitCodeListAgencyName", "United Nations Economic Commission for Europe");
-                            xmlw.WriteString(String.Format("{0:0.00}", Cantidades[cont_b]));//23 .- Unidad Mededida Item (Obligatorio)
-                            xmlw.WriteEndElement();
-                            xmlw.WriteStartElement("LineExtensionAmount", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
-                            xmlw.WriteAttributeString("currencyID", Fact.TipMone);
-                            xmlw.WriteString(String.Format("{0:0.00}",0));
-                            xmlw.WriteEndElement();
-                            ///////////////////////////  LineExtensionAmount/////////////////////////////////////////////////////
-                            //xmlw.WriteStartElement("LineExtensionAmount", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
-                            //xmlw.WriteAttributeString("currencyID", Fact.TipMone);
-                            break;
-
-                        case "GR":
-                            xmlw.WriteAttributeString("unitCode", "NIU");
-                            //xmlw.WriteAttributeString("unitCodeListID", "UN/ECE rec 20");
-                            //xmlw.WriteAttributeString("unitCodeListAgencyName", "United Nations Economic Commission for Europe");
-                            xmlw.WriteString(String.Format("{0:0.00}", Cantidades[cont_b]));
-                            xmlw.WriteEndElement();
-                            break;
-                    }
-
-                    switch (TipoDocumento)
-                    {
-                        case "F":
-                            xmlw.WriteString(String.Format("{0:0.00}", (Math.Round(Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b]), 2))));
-                            break;
-                        case "B":
-                            //   xmlw.WriteString((Math.Round(Convert.ToDouble(ValorVenta_item[cont_b]), 2)).ToString());
-                            xmlw.WriteString(String.Format("{0:0.00}", Math.Round((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b]) / 1.18), 2)));
-                            //.WriteString(Math.Round(ValorVenta_item(cont_b), 2)) ' Boleta 
-                            //  xmlw.WriteString(String.Format("{0:0.00}", Math.Round((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])/1.18),2)));
-                            //MessageBox.Show((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b]) / 1.18).ToString());
-
-                            // Console.Write(Math.Round((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18, 2));
-                            break;
-                        case "NC":
-                            //if (Fact.TipoDocumentoAnulacionNC.Equals("01"))
-                            if (Fact.SerieDocu.Substring(0, 1).Equals("F"))
-                            {
-                                xmlw.WriteString(String.Format("{0:0.00}", (Math.Round(Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b]), 2))));
-                            }
-                            //else if (Fact.TipoDocumentoAnulacionNC.Equals("03"))
-                            else if (Fact.SerieDocu.Substring(0, 1).Equals("B"))
-                            {
-                                xmlw.WriteString(String.Format("{0:0.00}", (Math.Round((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18, 2))));
-                            }
-                            break;
-                    }
-
-                    switch (TipoDocumento)
-                    {
-                        case "F":
-                        case "B":
-                        case "NC":
-                            xmlw.WriteEndElement();
-                            /////////////////////////  LineExtensionAmount end/////////////////////////////////////////////////////
-
-                            //////////////////////// Billing Reference LINE /////////////////////////////////////////////////////
-                            //' BillingReference
-                            xmlw.WriteStartElement("BillingReference", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
-                            //' BillingReferenceLine
-                            xmlw.WriteStartElement("BillingReferenceLine", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
-                            xmlw.WriteElementString("ID", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2", cont_b.ToString());
-                            // BillingReference  end 
-                            xmlw.WriteEndElement();
-                            // BillingReferenceLine end
-                            xmlw.WriteEndElement();
-                            //////////////////////// END Billing Reference LINE /////////////////////////////////////////////////////
-
-                            /////////////////////////////////////'PricingReference //////////////////////////////
-                            xmlw.WriteStartElement("PricingReference", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
-                            xmlw.WriteStartElement("AlternativeConditionPrice", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
-                            xmlw.WriteStartElement("PriceAmount", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
-                            xmlw.WriteAttributeString("currencyID", Fact.TipMone);
-                            break;
-                        case "ND":
-                            xmlw.WriteStartElement("PricingReference", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
-                            xmlw.WriteStartElement("AlternativeConditionPrice", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
-                            xmlw.WriteStartElement("PriceAmount", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
-                            xmlw.WriteAttributeString("currencyID", Fact.TipMone);
-
-                            break;
-                    }
-
-                    switch (TipoDocumento)
-                    {
-                        case "F":
-                            xmlw.WriteString(String.Format("{0:0.00}", ValorUnitario));
-                            break;
-                        case "B":
-                            if (Fact.CantidadBolsa > 0 && (CD_item[cont_b] == "BOL"))
-                            {
-                                xmlw.WriteString((Convert.ToDouble(ValorVenta_item[cont_b]) + Fact.PrecioUnitBolsa).ToString());
-
-                            }
-                            else
-                            {
-                                xmlw.WriteString(String.Format("{0:0.00}", (Math.Round(Convert.ToDouble(ValorVenta_item[cont_b]), 10))));
-                            }
-
-                            //   Console.Write(((Convert.ToDouble(ValorVenta_item[cont_b])) + Fact.ImporteBolsa).ToString());
-                            //MessageBox.Show(Math.Round(Convert.ToDouble(ValorVenta_item[cont_b]), 10).ToString());
-                            break;
-                        case "NC":
-                        case "ND":
-                            //if (Fact.TipoDocumentoAnulacionNC.Equals("01"))
-                            if (Fact.SerieDocu.Substring(0, 1).Equals("F"))
-                            {
-                                xmlw.WriteString(String.Format("{0:0.00}", ValorUnitario.ToString()));//29 Precio de Venta Unitario Item
-                            }
-                            //else if (Fact.TipoDocumentoAnulacionNC.Equals("03"))
-                            else if (Fact.SerieDocu.Substring(0, 1).Equals("B"))
-                            {
-                                xmlw.WriteString(String.Format("{0:0.00}", (Convert.ToDouble(ValorVenta_item[cont_b]))));
-                            }
-                            break;
-                    }
-
-                    switch (TipoDocumento)
-                    {
-                        case "F":
-                        case "B":
-                        case "NC":
-                        case "ND":
-                            xmlw.WriteEndElement();
-                            //'PriceTypeCode
-                            xmlw.WriteStartElement("PriceTypeCode", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
-                            xmlw.WriteAttributeString("listAgencyName", "PE:SUNAT");
-                            //'listName
-                            xmlw.WriteAttributeString("listName", "Tipo de Precio");
-                            //'listName
-                            xmlw.WriteAttributeString("listURI", "urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo16");
-                            xmlw.WriteString("01");
-                            xmlw.WriteEndElement();
-                            xmlw.WriteEndElement();
-                            xmlw.WriteEndElement();
-                            break;
-                    }
-                    /////////////////////////////////////'PricingReference//////////////////////////////
-
-
-
-                    //'LineExtensionAmount
+                case "F":
+                case "B":
+                case "NC":
+                case "ND" :
+                    xmlw.WriteAttributeString("unitCode", "NIU");
+                    //xmlw.WriteAttributeString("unitCodeListID", "UN/ECE rec 20");
+                    //xmlw.WriteAttributeString("unitCodeListAgencyName", "United Nations Economic Commission for Europe");
+                    xmlw.WriteString(String.Format("{0:0.00}", Cantidades[cont_b]));//23 .- Unidad Mededida Item (Obligatorio)
+                    xmlw.WriteEndElement();
+                    xmlw.WriteStartElement("LineExtensionAmount", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                    xmlw.WriteAttributeString("currencyID", Fact.TipMone);
+                    xmlw.WriteString(String.Format("{0:0.00}",0));
+                    xmlw.WriteEndElement();
+                    ///////////////////////////  LineExtensionAmount/////////////////////////////////////////////////////
                     //xmlw.WriteStartElement("LineExtensionAmount", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
                     //xmlw.WriteAttributeString("currencyID", Fact.TipMone);
-                    //switch (TipoDocumento)
-                    //{
-                    //    case "F":
-                    //        xmlw.WriteString(String.Format("{0:0.00}",(Math.Round(Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b]), 2))));
-                    //        break;
-                    //    case "B":
-                    //        //   xmlw.WriteString((Math.Round(Convert.ToDouble(ValorVenta_item[cont_b]), 2)).ToString());
-                    //        xmlw.WriteString(String.Format("{0:0.00}", Math.Round((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])/1.18),2)));
-                    //        //.WriteString(Math.Round(ValorVenta_item(cont_b), 2)) ' Boleta 
-                    //      //  xmlw.WriteString(String.Format("{0:0.00}", Math.Round((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])/1.18),2)));
-                    //        MessageBox.Show((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b]) / 1.18).ToString());
+                    break;
 
-                    //       // Console.Write(Math.Round((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18, 2));
-                    //        break;
-                    //    case "NC":
-                    //        if (Fact.TipoDocumentoAnulacionNC.Equals("01"))
-                    //        {
-                    //            xmlw.WriteString(String.Format("{0:0.00}",(Math.Round(Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b]), 2))));
-                    //        }
-                    //        else if (Fact.TipoDocumentoAnulacionNC.Equals("03"))
-                    //        {
-                    //            xmlw.WriteString(String.Format("{0:0.00}",(Math.Round((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18, 2))));
-                    //        }
-                    //        break ;
-                    //}
+                case "GR":
+                        xmlw.WriteAttributeString("unitCode", "NIU");
+                        //xmlw.WriteAttributeString("unitCodeListID", "UN/ECE rec 20");
+                        //xmlw.WriteAttributeString("unitCodeListAgencyName", "United Nations Economic Commission for Europe");
+                        xmlw.WriteString(String.Format("{0:0.00}", Cantidades[cont_b]));
+                        xmlw.WriteEndElement();
+                        break;
+                    //case "ND":
+                    ///////////////////////////  LineExtensionAmount/////////////////////////////////////////////////////
+                    //    xmlw.WriteStartElement("LineExtensionAmount", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                    //    xmlw.WriteAttributeString("currencyID", Fact.TipMone);
 
-                    //xmlw.WriteEndElement();
+                    //    break;
+                }
+                
+                switch (TipoDocumento)
+                {
+                    case "F":
+                        xmlw.WriteString(String.Format("{0:0.00}", (Math.Round(Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b]), 2))));
+                        break;
+                    case "B":
+                        //   xmlw.WriteString((Math.Round(Convert.ToDouble(ValorVenta_item[cont_b]), 2)).ToString());
+                        xmlw.WriteString(String.Format("{0:0.00}", Math.Round((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b]) / 1.18), 2)));
+                        //.WriteString(Math.Round(ValorVenta_item(cont_b), 2)) ' Boleta 
+                        //  xmlw.WriteString(String.Format("{0:0.00}", Math.Round((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])/1.18),2)));
+                        MessageBox.Show((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b]) / 1.18).ToString());
 
-                    ///////////////////////////////////'TaxTotal
-                    switch (TipoDocumento)
-                    {
-                        case "F":
-                        case "B":
-                        case "NC":
-                        case "ND":
-                            xmlw.WriteStartElement("TaxTotal", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
-                            xmlw.WriteStartElement("TaxAmount", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
-                            xmlw.WriteAttributeString("currencyID", Fact.TipMone);
-                            break;
-                    }
+                        // Console.Write(Math.Round((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18, 2));
+                        break;
+                    //case "ND":
+                    //    if (Fact.SerieDocu.Substring(0, 1).Equals("F"))
+                    //    {
+                    //        //xmlw.WriteString(String.Format("{0:0.00}", 0));
+                    //        xmlw.WriteString("Hola");
+                    //    }
+                    //    //else if (Fact.TipoDocumentoAnulacionNC.Equals("03"))
+                    //    else if (Fact.SerieDocu.Substring(0, 1).Equals("B"))
+                    //    {
+                    //        xmlw.WriteString(String.Format("{0:0.00}", 0));
+                    //    }
+                    //    break;
 
-                    switch (TipoDocumento)
-                    {
-                        case "F":
-                            xmlw.WriteString(String.Format("{0:0.00}", "0"));//Cambio
-                            break;
-                        case "B":
-                            // xmlw.WriteString(String.Format("{0:0.00}",Math.Round((((Math.Round((Convert.ToDouble(ValorVenta_item[cont_b]) / 1.18), 2) * Cantidades[cont_b]) * 1.18) - (Math.Round((Convert.ToDouble(ValorVenta_item[cont_b]) / 1.18), 2) * Cantidades[cont_b])), 2)));
-                            //((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18) *0.18
-                            if (Fact.CantidadBolsa > 0 && (CD_item[cont_b] == "BOL"))
-                            {
-                                xmlw.WriteString(String.Format("{0:0.00}", (Math.Round((Cantidades[cont_b] * Fact.ImporteTotalBolsa) - (((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18)), 2))));
-                            }
-                            else
-                            {
-                                xmlw.WriteString(String.Format("{0:0.00}", (Math.Round((((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18) * 0.18), 2))));
-                            }
-                            //  Console.Write((Math.Round((((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18) * 0.18), 2)));
-                            //  MessageBox.Show(Math.Round((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b]) * 0.18), 2));
-                            break;
-                        case "ND":
-                            //if (Fact.TipoDocumentoAnulacionNC.Equals("01"))
-                            if (Fact.SerieDocu.Substring(0, 1).Equals("F"))
-                            {
-                                xmlw.WriteString(String.Format("{0:0.00}", (Math.Round(Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b]), 2))));
-                            }
-                            //else if (Fact.TipoDocumentoAnulacionNC.Equals("03"))
-                            else if (Fact.SerieDocu.Substring(0, 1).Equals("B"))
-                            {
-                                xmlw.WriteString(String.Format("{0:0.00}", (Math.Round((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18, 2))));
-                            }
-                            break;
-                    }
-
-                    switch (TipoDocumento)
-                    {
-                        case "F":
-                        case "B":
-                        case "NC":
-                        case "ND":
-                            xmlw.WriteEndElement();
-                            //'TaxSubtotal
-
-                            //Inicio Impuesto selectivo Consumo//////
-                            xmlw.WriteStartElement("TaxSubtotal", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
-                            xmlw.WriteStartElement("TaxableAmount", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
-                            xmlw.WriteAttributeString("currencyID", Fact.TipMone);
-                            break;
-                    }
-
-                    switch (TipoDocumento)
-                    {
-                        case "F":
+                    case "NC":
+                        //if (Fact.TipoDocumentoAnulacionNC.Equals("01"))
+                        if (Fact.SerieDocu.Substring(0, 1).Equals("F")) {
                             xmlw.WriteString(String.Format("{0:0.00}", (Math.Round(Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b]), 2))));
-                            break;
-                        case "B":
+                        }
+                        //else if (Fact.TipoDocumentoAnulacionNC.Equals("03"))
+                        else if (Fact.SerieDocu.Substring(0, 1).Equals("B")) {
                             xmlw.WriteString(String.Format("{0:0.00}", (Math.Round((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18, 2))));
-                            break;
-                        case "NC":
-                            //if (Fact.TipoDocumentoAnulacionNC.Equals("01"))
-                            if (Fact.SerieDocu.Substring(0, 1).Equals("F"))
-                            {
-                                xmlw.WriteString(String.Format("{0:0.00}", (Math.Round(Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b]), 2))));
-                            }
-                            //else if (Fact.TipoDocumentoAnulacionNC.Equals("03"))
-                            else if (Fact.SerieDocu.Substring(0, 1).Equals("B"))
-                            {
-                                xmlw.WriteString(String.Format("{0:0.00}", (Math.Round((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18, 2))));
-                            }
-                            break;
-                        case "ND":
-                            //if (Fact.TipoDocumentoAnulacionNC.Equals("01"))
-                            if (Fact.SerieDocu.Substring(0, 1).Equals("F"))
-                            {
-                                xmlw.WriteString(String.Format("{0:0.00}", (Math.Round(Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b]), 2))));
-                            }
-                            //else if (Fact.TipoDocumentoAnulacionNC.Equals("03"))
-                            else if (Fact.SerieDocu.Substring(0, 1).Equals("B"))
-                            {
-                                xmlw.WriteString(String.Format("{0:0.00}", (Math.Round((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18, 2))));
-                            }
-                            break;
-                    }
+                        }
+                        break;
+                }
+              //  xmlw.WriteEndElement();
+                /////////////////////////  LineExtensionAmount end///////////////////////////////////////////////////// // cambio
+                switch(TipoDocumento){
+                    case "F":
+                    case "B":
+                    case "NC":
+                        //////////////////////// Billing Reference LINE /////////////////////////////////////////////////////
+                        //' BillingReference
+                        xmlw.WriteStartElement("BillingReference","urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
+                        //' BillingReferenceLine
+                        xmlw.WriteStartElement("BillingReferenceLine","urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
+                        xmlw.WriteElementString("ID", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2", cont_b.ToString());
+                        // BillingReference  end 
+                        xmlw.WriteEndElement();
+                        // BillingReferenceLine end
+                        xmlw.WriteEndElement();
+                        //////////////////////// END Billing Reference LINE /////////////////////////////////////////////////////
 
-                    switch (TipoDocumento)
-                    {
-                        case "F":
-                        case "B":
-                        case "NC":
-                        case "ND":
-                            xmlw.WriteEndElement();
-                            //'TaxAmount
-                            xmlw.WriteStartElement("TaxAmount", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
-                            xmlw.WriteAttributeString("currencyID", Fact.TipMone);
-                            //  xmlw.WriteString(Math.Round(igv_item,2).ToString()); // igv 
-                            break;
-                    }
-                    //String.Format("{0:00}", igv_item)
+                        /////////////////////////////////////'PricingReference //////////////////////////////
+                        xmlw.WriteStartElement("PricingReference", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
+                        xmlw.WriteStartElement("AlternativeConditionPrice", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
+                        xmlw.WriteStartElement("PriceAmount", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                        xmlw.WriteAttributeString("currencyID", Fact.TipMone);
+                    break;
+                    case "ND":
+                        xmlw.WriteStartElement("PricingReference", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
+                        xmlw.WriteStartElement("AlternativeConditionPrice", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
+                        xmlw.WriteStartElement("PriceAmount", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                        xmlw.WriteAttributeString("currencyID", Fact.TipMone);
 
-                    switch (TipoDocumento)
-                    {
-                        case "F":
+                    break;
+                    
+                }
+
+                switch (TipoDocumento)
+                {
+                    case "F":
+                        xmlw.WriteString(String.Format("{0:0.00}", ValorUnitario));
+                        break;
+                    case "B":
+                        if (Fact.CantidadBolsa > 0 && (CD_item[cont_b] == "BOL"))
+                        {
+                            xmlw.WriteString((Convert.ToDouble(ValorVenta_item[cont_b]) + Fact.PrecioUnitBolsa).ToString());
+                            
+                        }
+                        else
+                        {
+                           xmlw.WriteString(String.Format("{0:0.00}", (Math.Round(Convert.ToDouble(ValorVenta_item[cont_b]), 10))));
+                        }
+                        
+                     //   Console.Write(((Convert.ToDouble(ValorVenta_item[cont_b])) + Fact.ImporteBolsa).ToString());
+                        MessageBox.Show(Math.Round(Convert.ToDouble(ValorVenta_item[cont_b]), 10).ToString());
+                        break;
+                    case "NC":
+                    case "ND":
+
+                        //if (Fact.TipoDocumentoAnulacionNC.Equals("01"))
+                        if (Fact.SerieDocu.Substring(0, 1).Equals("F")) {
+                          //  xmlw.WriteString(String.Format("{0:0.00}", Item_Clasificacion[cont_txt_item]));
+                          xmlw.WriteString(String.Format("{0:0.00}", ValorUnitario)); //29 Precio de Venta Unitario Item
+                        }
+                        //else if (Fact.TipoDocumentoAnulacionNC.Equals("03"))
+                        else if (Fact.SerieDocu.Substring(0, 1).Equals("B"))
+                        {
+                            xmlw.WriteString(String.Format("{0:0.00}", (Convert.ToDouble(ValorVenta_item[cont_b]))));
+                        }
+                        break;
+                }
+
+                switch (TipoDocumento)
+                {
+                    case "F":
+                    case "B":
+                    case "NC":
+                    case "ND":
+                        xmlw.WriteEndElement();
+                        //'PriceTypeCode
+                        xmlw.WriteStartElement("PriceTypeCode", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                        xmlw.WriteAttributeString("listAgencyName", "PE:SUNAT");
+                        //'listName
+                        xmlw.WriteAttributeString("listName", "Tipo de Precio");
+                        //'listName
+                        xmlw.WriteAttributeString("listURI", "urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo16");
+                        xmlw.WriteString("01");
+                        xmlw.WriteEndElement();
+                        xmlw.WriteEndElement();
+                        xmlw.WriteEndElement();
+                        break;
+               
+                }
+                /////////////////////////////////////'PricingReference//////////////////////////////
+
+
+                ///////////////////////////////////'TaxTotal
+                switch (TipoDocumento)
+                {
+                    case "F":
+                    case "B":
+                    case "NC":
+                    case "ND":
+                        xmlw.WriteStartElement("TaxTotal", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
+                        xmlw.WriteStartElement("TaxAmount", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                        xmlw.WriteAttributeString("currencyID", Fact.TipMone);
+                        break;
+                }
+
+                switch (TipoDocumento)
+                {
+                    case "F":
+                        xmlw.WriteString(String.Format("{0:0.00}", "0"));//Cambio
+                        break;
+                    case "B":
+                        // xmlw.WriteString(String.Format("{0:0.00}",Math.Round((((Math.Round((Convert.ToDouble(ValorVenta_item[cont_b]) / 1.18), 2) * Cantidades[cont_b]) * 1.18) - (Math.Round((Convert.ToDouble(ValorVenta_item[cont_b]) / 1.18), 2) * Cantidades[cont_b])), 2)));
+                        //((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18) *0.18
+                        if (Fact.CantidadBolsa > 0 && (CD_item[cont_b] == "BOL"))
+                        {
+                            xmlw.WriteString(String.Format("{0:0.00}", (Math.Round((Cantidades[cont_b] * Fact.ImporteTotalBolsa) - (((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18)), 2))));
+                        }
+                        else
+                        {
+                            xmlw.WriteString(String.Format("{0:0.00}", (Math.Round((((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18) * 0.18), 2))));
+                        }
+                        //  Console.Write((Math.Round((((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18) * 0.18), 2)));
+                        //  MessageBox.Show(Math.Round((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b]) * 0.18), 2));
+                        break;
+                    case "ND":
+                        //if (Fact.TipoDocumentoAnulacionNC.Equals("01"))
+                        if (Fact.SerieDocu.Substring(0, 1).Equals("F"))
+                        {
+                            xmlw.WriteString(String.Format("{0:0.00}", (Math.Round(Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b]), 2))));
+                        }
+                        //else if (Fact.TipoDocumentoAnulacionNC.Equals("03"))
+                        else if (Fact.SerieDocu.Substring(0, 1).Equals("B"))
+                        {
+                            xmlw.WriteString(String.Format("{0:0.00}", (Math.Round((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18, 2))));
+                        }
+                        break;
+                }
+
+                switch (TipoDocumento)
+                {
+                    case "F":
+                    case "B":
+                    case "NC":
+                    case "ND":
+                        xmlw.WriteEndElement();
+                        //'TaxSubtotal
+
+                        //Inicio Impuesto selectivo Consumo//////
+                        xmlw.WriteStartElement("TaxSubtotal", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
+                        xmlw.WriteStartElement("TaxableAmount", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                        xmlw.WriteAttributeString("currencyID", Fact.TipMone);
+                        break;
+                }
+
+                switch (TipoDocumento)
+                {
+                    case "F":
+                        xmlw.WriteString(String.Format("{0:0.00}", (Math.Round(Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b]), 2))));
+                        break;
+                    case "B":
+                        xmlw.WriteString(String.Format("{0:0.00}", (Math.Round((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18, 2))));
+                        //.WriteString(Math.Round((Cantidades(cont_b) * ValorVenta_item(cont_b)) / 1.18, 2))
+                        break;
+                    case "NC":
+                        //if (Fact.TipoDocumentoAnulacionNC.Equals("01"))
+                        if (Fact.SerieDocu.Substring(0, 1).Equals("F"))
+                        {
+                            xmlw.WriteString(String.Format("{0:0.00}", (Math.Round(Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b]), 2))));
+                        }
+                        //else if (Fact.TipoDocumentoAnulacionNC.Equals("03"))
+                        else if (Fact.SerieDocu.Substring(0, 1).Equals("B")) {
+                            xmlw.WriteString(String.Format("{0:0.00}", (Math.Round((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18, 2))));
+                        }
+                        break;
+                    case "ND":
+                        //if (Fact.TipoDocumentoAnulacionNC.Equals("01"))
+                        if (Fact.SerieDocu.Substring(0, 1).Equals("F"))
+                        {
+                            xmlw.WriteString(String.Format("{0:0.00}", (Math.Round(Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b]), 2))));
+                        }
+                        //else if (Fact.TipoDocumentoAnulacionNC.Equals("03"))
+                        else if (Fact.SerieDocu.Substring(0, 1).Equals("B"))
+                        {
+                            xmlw.WriteString(String.Format("{0:0.00}", (Math.Round((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18, 2))));
+                        }
+                        break;
+                }
+
+                switch (TipoDocumento)
+                {
+                    case "F":
+                    case "B":
+                    case "NC":
+                    case "ND":
+                        xmlw.WriteEndElement();
+                        //'TaxAmount
+                        xmlw.WriteStartElement("TaxAmount", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                        xmlw.WriteAttributeString("currencyID", Fact.TipMone);
+                    //  xmlw.WriteString(Math.Round(igv_item,2).ToString()); // igv 
+                        break;
+                }
+
+                //String.Format("{0:00}", igv_item)
+
+
+                switch (TipoDocumento)
+                {
+                    case "F":
+                        xmlw.WriteString(String.Format("{0:0.00}", igv_item));
+                        break;
+                    case "B":
+                        // xmlw.WriteString(String.Format("{0:0.00}", Math.Round((((Math.Round((Convert.ToDouble(ValorVenta_item[cont_b]) / 1.18), 2) * Cantidades[cont_b]) * 1.18) - (Math.Round((Convert.ToDouble(ValorVenta_item[cont_b]) / 1.18), 2) * Cantidades[cont_b])), 2)));
+                        //.WriteString(Math.Round((Cantidades(cont_b) * ValorVenta_item(cont_b)) / 1.18, 2))
+                        // xmlw.WriteString(String.Format("{0:0.00}", (Math.Round((((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18) * 0.18), 2))));
+                        if (Fact.CantidadBolsa > 0 && (CD_item[cont_b] == "BOL"))                     
+                        {
+                            xmlw.WriteString(String.Format("{0:0.00}", (((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) - Math.Round(((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18), 2)))));
+                            //xmlw.WriteString(String.Format("{0:0.00}", (Math.Round(((((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18))), 2))));
+                            // Console.Write(String.Format("{0:0.00}",(Math.Round(((Cantidades[cont_b] * Fact.ImporteTotalBolsa) - (((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18) * 0.18)), 2))));
+                             //MessageBox.Show(Math.Round(((Cantidades[cont_b] * Fact.ImporteTotalBolsa) - (((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18))), 2).ToString());
+                            MessageBox.Show(String.Format("{0:0.00}", (((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) - Math.Round(((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18), 2)))));
+                        }
+                        else
+                        {
+                            xmlw.WriteString(String.Format("{0:0.00}", (Math.Round((((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18) * 0.18), 2))));
+                        }
+                        break;
+                    case "ND":
+                        if (Fact.SerieDocu.Substring(0, 1).Equals("F")) {
                             xmlw.WriteString(String.Format("{0:0.00}", igv_item));
-                            break;
-                        case "B":
-                            // xmlw.WriteString(String.Format("{0:0.00}", Math.Round((((Math.Round((Convert.ToDouble(ValorVenta_item[cont_b]) / 1.18), 2) * Cantidades[cont_b]) * 1.18) - (Math.Round((Convert.ToDouble(ValorVenta_item[cont_b]) / 1.18), 2) * Cantidades[cont_b])), 2)));
-                            //.WriteString(Math.Round((Cantidades(cont_b) * ValorVenta_item(cont_b)) / 1.18, 2))
-                            // xmlw.WriteString(String.Format("{0:0.00}", (Math.Round((((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18) * 0.18), 2))));
-                            if (Fact.CantidadBolsa > 0 && (CD_item[cont_b] == "BOL"))
-                            {
-                                xmlw.WriteString(String.Format("{0:0.00}", (((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) - Math.Round(((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18), 2)))));
-                                //xmlw.WriteString(String.Format("{0:0.00}", (Math.Round(((((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18))), 2))));
-                                // Console.Write(String.Format("{0:0.00}",(Math.Round(((Cantidades[cont_b] * Fact.ImporteTotalBolsa) - (((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18) * 0.18)), 2))));
-                                //MessageBox.Show(Math.Round(((Cantidades[cont_b] * Fact.ImporteTotalBolsa) - (((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18))), 2).ToString());
-                                //MessageBox.Show(String.Format("{0:0.00}", (((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) - Math.Round(((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18), 2)))));
-                            }
-                            else
-                            {
-                                xmlw.WriteString(String.Format("{0:0.00}", (Math.Round((((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18) * 0.18), 2))));
-                            }
-                            break;
-                        case "ND":
-                            if (Fact.SerieDocu.Substring(0, 1).Equals("F"))
-                            {
-                                xmlw.WriteString(String.Format("{0:0.00}", igv_item));
-                            }
-                            //else if (Fact.TipoDocumentoAnulacionNC.Equals("03"))
-                            else if (Fact.SerieDocu.Substring(0, 1).Equals("B"))
-                            {
-                                // xmlw.WriteString(String.Format("{0:0.00}", (Math.Round((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18, 2))));
-                            }
-                            break;
-                            break;
-                    }
-
-                    switch (TipoDocumento)
-                    {
-                        case "F":
-                        case "B":
-                        case "NC":
-                        case "ND":
-                            //// xmlw.WriteString(String.Format("{0:0.00}",Math.Round((((Math.Round((Convert.ToDouble(ValorVenta_item[cont_b]) / 1.18), 2) * Cantidades[cont_b]) * 1.18) - (Math.Round((Convert.ToDouble(ValorVenta_item[cont_b]) / 1.18), 2) * Cantidades[cont_b])), 2)));
-                            xmlw.WriteEndElement();
-                            //'TaxAmount
-                            xmlw.WriteStartElement("TaxCategory", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
-
-                            //*** id categoria / 14/01/2020
-                            xmlw.WriteStartElement("ID", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
-                            xmlw.WriteAttributeString("schemeAgencyName", "United Nations Economic Commission for Europe");
-                            xmlw.WriteAttributeString("schemeID", "UN/ECE 5305");
-                            xmlw.WriteAttributeString("schemeName", "Tax Category Identifier");
-                            /////////////////////////////////// 14-01-2020
-                            //Categoría  del  Impuesto 
-                            //xmlw.WriteString(ValidarCampos.Obtener_CatTributo(Fact.CodTribu));
-                            xmlw.WriteString(Fact.CatImpuesto);
-                            /////////////////////////////////// end
-                            xmlw.WriteEndElement();
-                            //*** end _ id categoria 14/01/2020
-
-                            xmlw.WriteStartElement("Percent", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
-                            xmlw.WriteString(String.Format("{0:0.00}", percent));
-                            xmlw.WriteEndElement();
-                            //'TaxExemptionReasonCode
-                            xmlw.WriteStartElement("TaxExemptionReasonCode", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
-                            xmlw.WriteAttributeString("listAgencyName", "PE:SUNAT");
-
-                            // xmlw.WriteAttributeString("listName", Fact.NomAfecta);
-                            xmlw.WriteAttributeString("listName", "IGV Impuesto General a las Ventas");
-                            xmlw.WriteAttributeString("listURI", "urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo07");
-                            xmlw.WriteString(Fact.codafecta.ToString());
-                            xmlw.WriteEndElement();
-                            //'TaxExemptionReasonCode
-                            //'TaxScheme
-                            xmlw.WriteStartElement("TaxScheme", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
-                            //'ID
-                            xmlw.WriteStartElement("ID", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
-                            xmlw.WriteAttributeString("schemeID", "UN/ECE 5153");
-                            xmlw.WriteAttributeString("schemeName", "Codigo de tributos");
-                            xmlw.WriteAttributeString("schemeAgencyName", "PE:SUNAT");
-                            xmlw.WriteAttributeString("schemeURI", "urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo07");
-                            xmlw.WriteString(Fact.CodTribu);
-                            xmlw.WriteEndElement();
-                            //'ID end 
-                            //'Name
-                            xmlw.WriteStartElement("Name", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
-                            xmlw.WriteString(Fact.NomTributo);
-                            xmlw.WriteEndElement();
-                            //'Nameend 
-                            //'TaxTypeCode
-                            xmlw.WriteStartElement("TaxTypeCode", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
-                            xmlw.WriteString(Fact.TipeCodeAtribu);
-                            xmlw.WriteEndElement();
-                            //'TaxTypeCode 
-                            xmlw.WriteEndElement();
-                            // 'TaxScheme end
-                            xmlw.WriteEndElement();
-                            //'TaxAmount end
-                            xmlw.WriteEndElement();
-                            //'TaxSubtotal
-                            break;
-                    }
-
-
-                    switch (TipoDocumento)
-                    {
-                        case "GR":
-                            xmlw.WriteStartElement("OrderLineReference", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
-                            xmlw.WriteStartElement("LineID", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
-                            xmlw.WriteCData(cont_b.ToString());
-                            //'LineID end
-                            xmlw.WriteEndElement();
-                            //'OrderLineReference end
-                            xmlw.WriteEndElement();
-                            break;
-                    }
-
-                    switch (TipoDocumento)
-                    {
-                        case "F":
-                        case "B":
-                        case "NC":
-                            xmlw.WriteEndElement();
-                            // 'TaxTotal
-
-                            //////////////////////////' Item /////////////////////////////////
-                            xmlw.WriteStartElement("Item", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
-                            //'Description
-                            xmlw.WriteStartElement("Description", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
-                            xmlw.WriteCData(String.Format("{0:0.00}", Dsc_Item[cont_b]));
-                            xmlw.WriteEndElement();
-                            //'Description end 
-                            //'SellersItemIdentification
-                            xmlw.WriteStartElement("SellersItemIdentification", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
-                            //'ID
-                            xmlw.WriteStartElement("ID", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
-                            xmlw.WriteString(CD_item[cont_b]);
-                            xmlw.WriteEndElement();
-                            //'ID end 
-                            xmlw.WriteEndElement();
-                            //'SellersItemIdentification end
-                            //'CommodityClassification
-                            xmlw.WriteStartElement("CommodityClassification", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
-                            //'ItemClassificationCode
-                            xmlw.WriteStartElement("ItemClassificationCode", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
-                            xmlw.WriteAttributeString("listID", "UNSPSC");
-                            xmlw.WriteAttributeString("listAgencyName", "GS1 US");
-                            xmlw.WriteAttributeString("listName", "Item Classification");
-                            xmlw.WriteString(Item_Clasificacion[cont_b]);
-                            xmlw.WriteEndElement();
-                            //'ItemClassificationCode end 
-                            xmlw.WriteEndElement();
-                            //'CommodityClassification end
-                            xmlw.WriteEndElement();
-                            //////////////////////////////////Item end////////////////////////////
-
-                            ///////////////////////////////////Price////////////////////////////////////
-                            xmlw.WriteStartElement("Price", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
-                            //PriceAmount
-                            xmlw.WriteStartElement("PriceAmount", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
-                            xmlw.WriteAttributeString("currencyID", Fact.TipMone);
-                            break;
-                        case "ND":
-                            //////////////////////////' Item /////////////////////////////////
-                            xmlw.WriteStartElement("Item", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
-                            //'Description
-                            xmlw.WriteStartElement("Description", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
-                            xmlw.WriteCData(String.Format("{0:0.00}", Dsc_Item[cont_b])); // Descripcion del Item 26 Note debito
-                            xmlw.WriteEndElement();
-                            //'Description end 
-                            //'SellersItemIdentification
-                            xmlw.WriteStartElement("SellersItemIdentification", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
-                            //'ID
-                            xmlw.WriteStartElement("ID", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
-                            xmlw.WriteString(CD_item[cont_b]);
-                            xmlw.WriteEndElement();
-                            //'ID end 
-                            xmlw.WriteEndElement();
-                            //xmlw.WriteEndElement();
-
-                            xmlw.WriteStartElement("CommodityClassification", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
-                            //'ItemClassificationCode
-                            xmlw.WriteStartElement("ItemClassificationCode", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
-                            xmlw.WriteAttributeString("listID", "UNSPSC");
-                            xmlw.WriteAttributeString("listAgencyName", "GS1 US");
-                            xmlw.WriteAttributeString("listName", "Item Classification");
-                            xmlw.WriteString(Item_Clasificacion[cont_b]);
-                            xmlw.WriteEndElement();
-                            //'ItemClassificationCode end 
-                            xmlw.WriteEndElement();
-                            xmlw.WriteEndElement();
-
-                            ///////////////////////////////////Price////////////////////////////////////
-                            xmlw.WriteStartElement("Price", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
-                            //PriceAmount
-                            xmlw.WriteStartElement("PriceAmount", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
-                            xmlw.WriteAttributeString("currencyID", Fact.TipMone); //Valor Unitario por ItEM
-
-                            break;
-                        case "GR":
-                            xmlw.WriteStartElement("Item", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
-                            xmlw.WriteStartElement("Name", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
-                            xmlw.WriteCData(String.Format("{0:0.00}", Dsc_Item[cont_b]));
-                            //'Name end
-                            xmlw.WriteEndElement();
-                            xmlw.WriteStartElement("SellersItemIdentification", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
-                            xmlw.WriteStartElement("ID", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
-                            xmlw.WriteString(CD_item[cont_b]);
-                            //'ID end
-                            xmlw.WriteEndElement();
-                            //'SellersItemIdenti end
-                            xmlw.WriteEndElement();
-                            //'Item end
-                            xmlw.WriteEndElement();
-                            break;
-                    }
-
-
-                    //.WriteString(Math.Round(ValorVenta_item(cont_b) / 1.18, 2)) 'Boleta
-
-                    switch (TipoDocumento)
-                    {
-                        case "F":
-                            xmlw.WriteString(String.Format("{0:0.00}", ValorVenta_item[cont_b]));// factura
-                            break;
-                        case "B":
-                            xmlw.WriteString(String.Format("{0:0.00}", (Math.Round((Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18, 2))));
-                            break;
-                        case "ND":
-                            if (Fact.SerieDocu.Substring(0, 1).Equals("F"))
-                            {
-                                xmlw.WriteString(String.Format("{0:0.00}", (Math.Round(Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b]), 2))));
-                                // xmlw.WriteString(String.Format("{0:0.00}", Item_Clasificacion[cont_txt_item]));
-                            }
-                            //else if (Fact.TipoDocumentoAnulacionNC.Equals("03"))
-                            else if (Fact.SerieDocu.Substring(0, 1).Equals("B"))
-                            {
-                                xmlw.WriteString(String.Format("{0:0.00}", (Math.Round((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18, 2))));
-                            }
-                            break;
-                    }
-
-                    switch (TipoDocumento)
-                    {
-                        case "F":
-                        case "B":
-                        case "NC":
-                            xmlw.WriteEndElement();
-                            //PriceAmount end
-                            xmlw.WriteEndElement();
-                            //////////////////////////////////////Price end//////////////////////////////////////                                         
-                            xmlw.WriteEndElement();
-                            break;
-                        case "ND":
-                            xmlw.WriteEndElement();
-                            //PriceAmount end
-                            xmlw.WriteEndElement();
-                            break;
-                    }
-
-                    xmlw.Close();
-                    /*    
-                    foreach (XmlNode xn in xmlw)
-                    {
-                    string firstName = xn["FirstName"].InnerText;
-                    string lastName = xn["LastName"].InnerText;
-                    Console.WriteLine("Name: {0} {1}", firstName, lastName);
-                    }*/
-                    cont_b += 1;
-
-                }// ========= END DETALLE ===========
-
-
-                //====  GUARDAR XML definitivo  ====
-                try
-                {
-                    doc2.Save(ConfigurationManager.AppSettings["XmlMain"] + "/" + NombreArchivoXml);
-
-                    //llenarGrid(cont_b, NombreArchivoXml,1,errorXml);
-                    //listsaveXml.Add(NombreArchivo);
-                    MessageBox.Show("Se generó XML satisfactoriamente!");
-                }
-                catch (XmlException ex)
-                {
-                    Console.WriteLine(ex.ToString());
-                    MessageBox.Show("Error al intentar guardar XML \nDescripción: " + ex.Message);
-                    errorXml.Add(NombreArchivo + "-" + ex.Message);
-                }
-                // ================ END XML (SIN FIRMA) ================
-
-
-                // FIRMA DIGITAL - XML
-                string fn_firma = "firmademo-20102089635.pfx";
-                //string l_xml = @"C:\Users\Romain\Desktop\SUNAT\test csharp\20381235051-01-FF11-01.xml";
-                string rt_xml = System.Configuration.ConfigurationSettings.AppSettings["XmlMain"].ToString();
-                string rt_cer = System.Configuration.ConfigurationSettings.AppSettings["RutaFirma"].ToString();
-
-                // CREDENCIALES FIRMA
-                string l_xml = rt_xml + "/" + NombreArchivoXml;
-                string l_certificado = rt_cer + "/" + fn_firma;
-                string l_pwd = "clave2020";
-                string l_xpath;
-
-                X509Certificate2 l_cert = new X509Certificate2(l_certificado, l_pwd);
-                XmlDocument xmlDoc = new XmlDocument();
-                xmlDoc.PreserveWhitespace = true;
-                xmlDoc.Load(l_xml);
-                SignedXml signedXml = new SignedXml(xmlDoc);
-                signedXml.SigningKey = l_cert.PrivateKey;
-                KeyInfo KeyInfo = new KeyInfo();
-                Reference Reference = new Reference();
-                Reference.Uri = "";
-                Reference.AddTransform(new XmlDsigEnvelopedSignatureTransform());
-                signedXml.AddReference(Reference);
-
-                X509Chain X509Chain = new X509Chain();
-                X509Chain.Build(l_cert);
-                X509ChainElement local_element = X509Chain.ChainElements[0];
-                KeyInfoX509Data x509Data = new KeyInfoX509Data(local_element.Certificate);
-                string subjectName = local_element.Certificate.Subject;
-
-                x509Data.AddSubjectName(subjectName);
-                KeyInfo.AddClause(x509Data);
-
-                signedXml.KeyInfo = KeyInfo;
-                signedXml.ComputeSignature();
-
-                XmlElement signature = signedXml.GetXml();
-                signature.Prefix = "ds";
-                signedXml.ComputeSignature();
-
-                foreach (XmlNode loop_node in signature.SelectNodes("descendant-or-self::*[namespace-uri()='http://www.w3.org/2000/09/xmldsig#']"))
-                {
-                    if (loop_node.LocalName == "Signature")
-                    {
-                        XmlAttribute newAttribute = xmlDoc.CreateAttribute("Id");
-                        newAttribute.Value = "SignatureSP";
-                        loop_node.Attributes.Append(newAttribute);
-                    }
+                        }
+                        //else if (Fact.TipoDocumentoAnulacionNC.Equals("03"))
+                        else if (Fact.SerieDocu.Substring(0, 1).Equals("B")) {
+                           // xmlw.WriteString(String.Format("{0:0.00}", (Math.Round((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18, 2))));
+                        }
+                        break;
+                        break;
                 }
 
-                XmlNamespaceManager nsMgr = new XmlNamespaceManager(xmlDoc.NameTable);
-                nsMgr.AddNamespace("sac", "urn:sunat:names:specification:ubl:peru:schema:xsd:SunatAggregateComponents-1");
-                nsMgr.AddNamespace("ccts", "urn:un:unece:uncefact:documentation:2");
-                nsMgr.AddNamespace("xsi", "http://www.w3.org/2001/XMLSchema-instance");
-
-                if (l_xml.Contains("-01-") || l_xml.Contains("-03-")) //factura - boleta
+                switch (TipoDocumento)
                 {
-                    nsMgr.AddNamespace("tns", "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2");
-                    l_xpath = "/tns:Invoice/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent";
-                    //l_xpath = "/tns:Invoice/ext:UBLExtensions/ext:UBLExtension[2]/ext:ExtensionContent";
+                    case "F":
+                    case "B":
+                    case "NC":
+                    case "ND":
+                        //// xmlw.WriteString(String.Format("{0:0.00}",Math.Round((((Math.Round((Convert.ToDouble(ValorVenta_item[cont_b]) / 1.18), 2) * Cantidades[cont_b]) * 1.18) - (Math.Round((Convert.ToDouble(ValorVenta_item[cont_b]) / 1.18), 2) * Cantidades[cont_b])), 2)));
+                        xmlw.WriteEndElement();
+                        //'TaxAmount
+                        xmlw.WriteStartElement("TaxCategory", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
+
+                        //*** id categoria / 14/01/2020
+                        xmlw.WriteStartElement("ID", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                        xmlw.WriteAttributeString("schemeAgencyName", "United Nations Economic Commission for Europe");
+                        xmlw.WriteAttributeString("schemeID", "UN/ECE 5305");
+                        xmlw.WriteAttributeString("schemeName", "Tax Category Identifier");
+                        /////////////////////////////////// 14-01-2020
+                        //Categoría  del  Impuesto 
+                        //xmlw.WriteString(ValidarCampos.Obtener_CatTributo(Fact.CodTribu));
+                        xmlw.WriteString(Fact.CatImpuesto);
+                        /////////////////////////////////// end
+                        xmlw.WriteEndElement();
+                        //*** end _ id categoria 14/01/2020
+
+                        xmlw.WriteStartElement("Percent", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                        xmlw.WriteString(String.Format("{0:0.00}", percent));
+                        xmlw.WriteEndElement();
+                        //'TaxExemptionReasonCode
+                        xmlw.WriteStartElement("TaxExemptionReasonCode", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                        xmlw.WriteAttributeString("listAgencyName", "PE:SUNAT");
+
+                        // xmlw.WriteAttributeString("listName", Fact.NomAfecta);
+                        xmlw.WriteAttributeString("listName", "IGV Impuesto General a las Ventas");
+                        xmlw.WriteAttributeString("listURI", "urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo07");
+                        xmlw.WriteString(Fact.codafecta.ToString());
+                        xmlw.WriteEndElement();
+                        //'TaxExemptionReasonCode
+                        //'TaxScheme
+                        xmlw.WriteStartElement("TaxScheme", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
+                        //'ID
+                        xmlw.WriteStartElement("ID", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                        xmlw.WriteAttributeString("schemeID", "UN/ECE 5153");
+                        xmlw.WriteAttributeString("schemeName", "Codigo de tributos");
+                        xmlw.WriteAttributeString("schemeAgencyName", "PE:SUNAT");
+                        xmlw.WriteAttributeString("schemeURI", "urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo07");
+                        xmlw.WriteString(Fact.CodTribu);
+                        xmlw.WriteEndElement();
+                        //'ID end 
+                        //'Name
+                        xmlw.WriteStartElement("Name", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                        xmlw.WriteString(Fact.NomTributo);
+                        xmlw.WriteEndElement();
+                        //'Nameend 
+                        //'TaxTypeCode
+                        xmlw.WriteStartElement("TaxTypeCode", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                        xmlw.WriteString(Fact.TipeCodeAtribu);
+                        xmlw.WriteEndElement();
+                        //'TaxTypeCode 
+                        xmlw.WriteEndElement();
+                        // 'TaxScheme end
+                        xmlw.WriteEndElement();
+                        //'TaxAmount end
+                        xmlw.WriteEndElement();
+                        //'TaxSubtotal
+                        break;
                 }
-                else if (l_xml.Contains("-07-")) //nota de crédito
-                {
-                    nsMgr.AddNamespace("tns", "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2");
-                    l_xpath = "/tns:CreditNote/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent";
+
+
+
+                //xmlw.WriteStartElement("TaxSubtotal", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
+                //xmlw.WriteStartElement("TaxableAmount", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                //xmlw.WriteAttributeString("currencyID", Fact.TipMone);
+
+                //switch (TipoDocumento)
+                //{
+                //    case "F":
+                //        xmlw.WriteString(String.Format("{0:0.00}", (Math.Round(Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b]), 2))));
+                //        break;
+                //    case "B":
+                //        xmlw.WriteString(String.Format("{0:0.00}", (Math.Round((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18, 2))));
+                //        //.WriteString(Math.Round((Cantidades(cont_b) * ValorVenta_item(cont_b)) / 1.18, 2))
+                //        Console.Write(Math.Round((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18, 2));
+
+                //        break;
+                //    case "NC":
+                //        if (Fact.TipoDocumentoAnulacionNC.Equals("01"))
+                //        {
+                //            xmlw.WriteString((Math.Round(Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b]), 2)).ToString());
+                //        }
+                //        else if (Fact.TipoDocumentoAnulacionNC.Equals("03"))
+                //        {
+                //            xmlw.WriteString((Math.Round((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18, 2)).ToString());
+                //        }
+                //        break;
+
+                //}
+
+
+                //xmlw.WriteEndElement();
+                ////'TaxAmount
+                //xmlw.WriteStartElement("TaxAmount", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                //xmlw.WriteAttributeString("currencyID", Fact.TipMone);
+                ////  xmlw.WriteString(Math.Round(igv_item,2).ToString()); // igv 
+
+                ////String.Format("{0:00}", igv_item)
+
+                //xmlw.WriteString(String.Format("{0:0.00}", igv_item));
+
+                //// xmlw.WriteString(String.Format("{0:0.00}",Math.Round((((Math.Round((Convert.ToDouble(ValorVenta_item[cont_b]) / 1.18), 2) * Cantidades[cont_b]) * 1.18) - (Math.Round((Convert.ToDouble(ValorVenta_item[cont_b]) / 1.18), 2) * Cantidades[cont_b])), 2)));
+                //xmlw.WriteEndElement();
+                ////'TaxAmount
+                //xmlw.WriteStartElement("TaxCategory", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
+                //// agregado 14-01-2020
+                //xmlw.WriteStartElement("ID", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                //xmlw.WriteAttributeString("schemeAgencyName", "United Nations Economic Commission for Europe");
+                //xmlw.WriteAttributeString("schemeID", "UN/ECE 5305");
+                //xmlw.WriteAttributeString("schemeName", "Tax Category Identifier");
+                ////xmlw.WriteString(ValidarCampos.Obtener_CatTributo(Fact.CodTribu));
+                ////  xmlw.WriteString(Fact.CatImpuesto);
+                //xmlw.WriteString("S");
+                //xmlw.WriteEndElement();
+                //// END - agregado 14-01-2020 
+
+                //xmlw.WriteStartElement("Percent", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+
+                //switch (TipoDocumento)
+                //{
+                //    case "F":
+                //        xmlw.WriteString(String.Format("{0:0.00}", percent));
+                //        break;
+                //    case "B":
+                //        xmlw.WriteString(String.Format("{0:0.00}", "0"));
+                //        break;
+                //}
+
+
+
+
+                ////urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2
+                //xmlw.WriteEndElement();
+
+                //xmlw.WriteStartElement("TierRange", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                //xmlw.WriteString("0");
+                //xmlw.WriteEndElement();
+                ////'TaxExemptionReasonCode
+
+                ////'TaxExemptionReasonCode
+                ////'TaxScheme
+                //xmlw.WriteStartElement("TaxScheme", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
+                ////'ID
+                //xmlw.WriteStartElement("ID", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                //xmlw.WriteAttributeString("schemeAgencyName", "PE:SUNAT");
+                //xmlw.WriteAttributeString("schemeID", "UN/ECE 5153");
+                //xmlw.WriteAttributeString("schemeName", "Codigo de tributos");
+                //xmlw.WriteString("2000");
+                //xmlw.WriteEndElement();
+                ////'ID end 
+                ////'Name
+                //xmlw.WriteStartElement("Name", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                //xmlw.WriteString("ISC");
+                //xmlw.WriteEndElement();
+                ////'Nameend 
+                ////'TaxTypeCode
+                //xmlw.WriteStartElement("TaxTypeCode", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                //xmlw.WriteString("EXC");
+                //xmlw.WriteEndElement();
+                ////'TaxTypeCode 
+                //xmlw.WriteEndElement();
+                //// 'TaxScheme end
+                //xmlw.WriteEndElement();
+                ////'TaxAmount end
+                //xmlw.WriteEndElement();
+                //'TaxSubtotal
+                //  xmlw.WriteEndElement();
+
+              
+                //Fin Impuesto
+                //////////////////////////////////
+
+                //switch (TipoDocumento)
+                //{
+                //    case "B":
+
+
+                //        if (Fact.CantidadBolsa > 0 && (CD_item[cont_b] == "BOL"))
+                //        {
+                //            xmlw.WriteStartElement("TaxSubtotal", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
+                //            xmlw.WriteStartElement("TaxAmount", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                //            xmlw.WriteAttributeString("currencyID", Fact.TipMone);
+                //            xmlw.WriteString(Fact.ImporteBolsa.ToString());
+                //            xmlw.WriteEndElement();
+                //            xmlw.WriteStartElement("BaseUnitMeasure", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
+                //            xmlw.WriteAttributeString("unitCode", "NIU");
+                //            xmlw.WriteString(Fact.CantidadBolsa.ToString());
+                //            xmlw.WriteEndElement();
+                //            xmlw.WriteStartElement("TaxCategory", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
+                //            xmlw.WriteStartElement("PerUnitAmount", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
+                //            xmlw.WriteAttributeString("currencyID", Fact.TipMone);
+                //            xmlw.WriteString(Fact.PrecioUnitBolsa.ToString());
+                //            xmlw.WriteEndElement();
+                //            xmlw.WriteStartElement("TaxScheme", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
+
+                //            xmlw.WriteStartElement("ID", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                //            xmlw.WriteAttributeString("schemeAgencyName", "PE:SUNAT");
+                //            xmlw.WriteAttributeString("schemeURI", "urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo05");
+                //            xmlw.WriteAttributeString("schemeName", "Codigo de tributos");
+                //            xmlw.WriteString("7152");
+                //            xmlw.WriteEndElement();
+                //            //'ID end 
+                //            //'Name
+                //            xmlw.WriteStartElement("Name", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                //            xmlw.WriteString("ICBPER");
+                //            xmlw.WriteEndElement();
+                //            //'Nameend 
+                //            //'TaxTypeCode
+                //            xmlw.WriteStartElement("TaxTypeCode", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                //            xmlw.WriteString("OTH");
+                //            xmlw.WriteEndElement();
+                //            //'TaxTypeCode 
+                //            xmlw.WriteEndElement();
+                //            // 'TaxScheme end
+                //            xmlw.WriteEndElement();
+                //            //'TaxAmount end
+                //            xmlw.WriteEndElement();
+                //            //'TaxSubtotal end
+                //        }
+                //        break;
+                //}
+
+                switch (TipoDocumento) {
+                    case "GR":
+                        xmlw.WriteStartElement("OrderLineReference", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
+                        xmlw.WriteStartElement("LineID", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                        xmlw.WriteCData(cont_b.ToString());
+                        //'LineID end
+                        xmlw.WriteEndElement();
+                        //'OrderLineReference end
+                        xmlw.WriteEndElement();
+                        break;
                 }
-                else if (l_xml.Contains("-08-"))//nota de débito
+
+                xmlw.WriteEndElement();//CAMBIO
+                // 'TaxTotal
+                
+                switch (TipoDocumento)
                 {
-                    nsMgr.AddNamespace("tns", "urn:oasis:names:specification:ubl:schema:xsd:DebitNote-2");
-                    l_xpath = "/tns:DebitNote/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent";
+                    case "F":
+                    case "B":
+                    case "NC":
+                        //////////////////////////' Item /////////////////////////////////
+                        xmlw.WriteStartElement("Item", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
+                        //'Description
+                        xmlw.WriteStartElement("Description", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                        xmlw.WriteCData(String.Format("{0:0.00}", Dsc_Item[cont_b]));
+                        xmlw.WriteEndElement();
+                        //'Description end 
+                        //'SellersItemIdentification
+                        xmlw.WriteStartElement("SellersItemIdentification", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
+                        //'ID
+                        xmlw.WriteStartElement("ID", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                        xmlw.WriteString(CD_item[cont_b]);
+                        xmlw.WriteEndElement();
+                        //'ID end 
+                        xmlw.WriteEndElement();
+                        //'SellersItemIdentification end
+                        //'CommodityClassification
+                        xmlw.WriteStartElement("CommodityClassification", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
+                        //'ItemClassificationCode
+                        xmlw.WriteStartElement("ItemClassificationCode", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                        xmlw.WriteAttributeString("listID", "UNSPSC");
+                        xmlw.WriteAttributeString("listAgencyName", "GS1 US");
+                        xmlw.WriteAttributeString("listName", "Item Classification");
+                        xmlw.WriteString(Item_Clasificacion[cont_b]);
+                        xmlw.WriteEndElement();
+                        //'ItemClassificationCode end 
+                        xmlw.WriteEndElement();
+                        //'CommodityClassification end
+                        xmlw.WriteEndElement();
+                        //////////////////////////////////Item end////////////////////////////
+
+                        ///////////////////////////////////Price////////////////////////////////////
+                        xmlw.WriteStartElement("Price", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
+                        //PriceAmount
+                        xmlw.WriteStartElement("PriceAmount", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                        xmlw.WriteAttributeString("currencyID", Fact.TipMone);
+                        break;
+                    case "ND" :
+                        //////////////////////////' Item /////////////////////////////////
+                        xmlw.WriteStartElement("Item", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
+                        //'Description
+                        xmlw.WriteStartElement("Description", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                        xmlw.WriteCData(String.Format("{0:0.00}", Dsc_Item[cont_b])); // Descripcion del Item 26 Note debito
+                        xmlw.WriteEndElement();
+                        //'Description end 
+                        //'SellersItemIdentification
+                        xmlw.WriteStartElement("SellersItemIdentification", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
+                        //'ID
+                        xmlw.WriteStartElement("ID", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                        xmlw.WriteString(CD_item[cont_b]);
+                        xmlw.WriteEndElement();
+                        //'ID end 
+                        xmlw.WriteEndElement();
+                        //xmlw.WriteEndElement();
+
+                         xmlw.WriteStartElement("CommodityClassification", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
+                        //'ItemClassificationCode
+                        xmlw.WriteStartElement("ItemClassificationCode", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                        xmlw.WriteAttributeString("listID", "UNSPSC");
+                        xmlw.WriteAttributeString("listAgencyName", "GS1 US");
+                        xmlw.WriteAttributeString("listName", "Item Classification");
+                        xmlw.WriteString(Item_Clasificacion[cont_b]);
+                        xmlw.WriteEndElement();
+                        //'ItemClassificationCode end 
+                        xmlw.WriteEndElement();
+                        xmlw.WriteEndElement();
+
+                        ///////////////////////////////////Price////////////////////////////////////
+                        xmlw.WriteStartElement("Price", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
+                        //PriceAmount
+                        xmlw.WriteStartElement("PriceAmount", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                        xmlw.WriteAttributeString("currencyID", Fact.TipMone); //Valor Unitario por ItEM
+           
+                        break;
+                    case "GR":
+                        xmlw.WriteStartElement("Item", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
+                        xmlw.WriteStartElement("Name", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                        xmlw.WriteCData(String.Format("{0:0.00}", Dsc_Item[cont_b]));
+                        //'Name end
+                        xmlw.WriteEndElement();
+                        xmlw.WriteStartElement("SellersItemIdentification", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
+                        xmlw.WriteStartElement("ID", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+                        xmlw.WriteString(CD_item[cont_b]);
+                        //'ID end
+                        xmlw.WriteEndElement();
+                        //'SellersItemIdenti end
+                        xmlw.WriteEndElement();
+                        //'Item end
+                        xmlw.WriteEndElement();
+                        break;
                 }
-                else if (l_xml.Contains("-09-"))// Guia Remision
+
+
+                //.WriteString(Math.Round(ValorVenta_item(cont_b) / 1.18, 2)) 'Boleta
+
+                switch (TipoDocumento)
                 {
-                    nsMgr.AddNamespace("tns", "urn:oasis:names:specification:ubl:schema:xsd:DespatchAdvice-2");
-                    l_xpath = "/tns:DespatchAdvice/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent";
+                    case "F":
+                        xmlw.WriteString(String.Format("{0:0.00}", ValorVenta_item[cont_b]));// factura
+                        break;
+                    case "B":
+                        xmlw.WriteString(String.Format("{0:0.00}", (Math.Round((Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18, 2))));
+                        break;
+
+                    case "ND":
+                       if (Fact.SerieDocu.Substring(0, 1).Equals("F"))
+                        {
+                            xmlw.WriteString(String.Format("{0:0.00}", (Math.Round(Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b]), 2))));
+                           // xmlw.WriteString(String.Format("{0:0.00}", Item_Clasificacion[cont_txt_item]));
+                        }
+                        //else if (Fact.TipoDocumentoAnulacionNC.Equals("03"))
+                        else if (Fact.SerieDocu.Substring(0, 1).Equals("B")) {
+                            xmlw.WriteString(String.Format("{0:0.00}", (Math.Round((Cantidades[cont_b] * Convert.ToDouble(ValorVenta_item[cont_b])) / 1.18, 2))));
+                        }
+                        break;
+                       
+
                 }
-                else // communicacion de baja
+
+                switch (TipoDocumento)
                 {
-                    nsMgr.AddNamespace("tns", "urn:sunat:names:specification:ubl:peru:schema:xsd:VoidedDocuments-1");
-                    l_xpath = "/tns:VoidedDocuments/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent";
+                    case "F":
+                    case "B":
+                    case "NC" :
+                        xmlw.WriteEndElement();
+                        //PriceAmount end
+                        xmlw.WriteEndElement();
+                        //////////////////////////////////////Price end//////////////////////////////////////                                         
+                        xmlw.WriteEndElement();
+                        break;
+                    case "ND":
+                          xmlw.WriteEndElement();
+                        //PriceAmount end
+                        xmlw.WriteEndElement();
+                        break;
+     
                 }
 
-                nsMgr.AddNamespace("cac", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
-                nsMgr.AddNamespace("udt", "urn:un:unece:uncefact:data:specification:UnqualifiedDataTypesSchemaModule:2");
-                nsMgr.AddNamespace("ext", "urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2");
-                nsMgr.AddNamespace("qdt", "urn:oasis:names:specification:ubl:schema:xsd:QualifiedDatatypes-2");
-                nsMgr.AddNamespace("cbc", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
-                nsMgr.AddNamespace("ds", "http://www.w3.org/2000/09/xmldsig#");
-
-
-                //xmlDoc.SelectSingleNode(l_xpath,nsMgr).AppendChild(xmlDoc.ImportNode(signature, true));
-
-                XmlNode fnode = xmlDoc.SelectSingleNode(l_xpath, nsMgr);
-
-                if (fnode != null)
+                xmlw.Close();
+                /*    
+                foreach (XmlNode xn in xmlw)
                 {
-                    fnode.AppendChild(xmlDoc.ImportNode(signature, true));
+                string firstName = xn["FirstName"].InnerText;
+                string lastName = xn["LastName"].InnerText;
+                Console.WriteLine("Name: {0} {1}", firstName, lastName);
+                }*/
+                cont_b += 1;
+
+            }
+
+            doc2.Save(ConfigurationManager.AppSettings["RutaXml"]+ "/" + NombreArchivoXml);
+            Tools  Util = new Tools();
+            
+          //  Util.ZipXMl(ConfigurationManager.AppSettings["RutaXml"] + "/" + NombreArchivoXml, ConfigurationManager.AppSettings["DestinoPathZip"] + "/" + NombreArchivo + ".zip");
+
+
+            Util.CreateZipFile(ConfigurationManager.AppSettings["RutaXml"] + "/" + NombreArchivoXml, ConfigurationManager.AppSettings["DestinoPathZip"] + "/" + NombreArchivo + ".zip");
+
+            // ==== END DETALLE ====
+
+            MessageBox.Show("Se generó XML satisfactoriamente!");
+
+            
+            // ====== AGREGAR FIRMA DIGITAL A XML ======
+            string fn_firma = "firmademo-20102089635.pfx";
+            //string l_xml = @"C:\Users\Romain\Desktop\SUNAT\test csharp\20381235051-01-FF11-01.xml";
+            string rt_xml = System.Configuration.ConfigurationSettings.AppSettings["RutaXml"].ToString();
+            string rt_cer = System.Configuration.ConfigurationSettings.AppSettings["RutaFirma"].ToString();
+
+            string l_xml = rt_xml + "/" + NombreArchivoXml;
+            string l_certificado = rt_cer + "/" + fn_firma;
+            string l_pwd = "clave2020";
+            string l_xpath;
+
+            X509Certificate2 l_cert = new X509Certificate2(l_certificado, l_pwd);
+
+            XmlDocument xmlDoc = new XmlDocument();
+            xmlDoc.PreserveWhitespace = true;
+            xmlDoc.Load(l_xml);
+
+            SignedXml signedXml = new SignedXml(xmlDoc);
+
+            signedXml.SigningKey = l_cert.PrivateKey;
+            KeyInfo KeyInfo = new KeyInfo();
+
+            Reference Reference = new Reference();
+            Reference.Uri = "";
+
+            Reference.AddTransform(new XmlDsigEnvelopedSignatureTransform());
+            signedXml.AddReference(Reference);
+
+            X509Chain X509Chain = new X509Chain();
+            X509Chain.Build(l_cert);
+
+            X509ChainElement local_element = X509Chain.ChainElements[0];
+            KeyInfoX509Data x509Data = new KeyInfoX509Data(local_element.Certificate);
+            string subjectName = local_element.Certificate.Subject;
+
+            x509Data.AddSubjectName(subjectName);
+            KeyInfo.AddClause(x509Data);
+
+            signedXml.KeyInfo = KeyInfo;
+            signedXml.ComputeSignature();
+
+            XmlElement signature = signedXml.GetXml();
+            signature.Prefix = "ds";
+            signedXml.ComputeSignature();
+
+            foreach (XmlNode loop_node in signature.SelectNodes("descendant-or-self::*[namespace-uri()='http://www.w3.org/2000/09/xmldsig#']"))
+            {
+                if (loop_node.LocalName == "Signature")
+                {
+                    XmlAttribute newAttribute = xmlDoc.CreateAttribute("Id");
+                    newAttribute.Value = "SignatureSP";
+                    loop_node.Attributes.Append(newAttribute);
                 }
-                xmlDoc.Save(l_xml);
+
+            }
+
+            XmlNamespaceManager nsMgr = new XmlNamespaceManager(xmlDoc.NameTable);
+            nsMgr.AddNamespace("sac", "urn:sunat:names:specification:ubl:peru:schema:xsd:SunatAggregateComponents-1");
+            nsMgr.AddNamespace("ccts", "urn:un:unece:uncefact:documentation:2");
+            nsMgr.AddNamespace("xsi", "http://www.w3.org/2001/XMLSchema-instance");
+
+            if (l_xml.Contains("-01-") || l_xml.Contains("-03-")) //factura - boleta
+            {
+                nsMgr.AddNamespace("tns", "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2");
+                l_xpath = "/tns:Invoice/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent";
+                //l_xpath = "/tns:Invoice/ext:UBLExtensions/ext:UBLExtension[2]/ext:ExtensionContent";
+            }
+            else if (l_xml.Contains("-07-")) //nota de crédito
+            {
+                nsMgr.AddNamespace("tns", "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2");
+                l_xpath = "/tns:CreditNote/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent";
+            }
+            else if (l_xml.Contains("-08-"))//nota de débito
+            {
+                nsMgr.AddNamespace("tns", "urn:oasis:names:specification:ubl:schema:xsd:DebitNote-2");
+                l_xpath = "/tns:DebitNote/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent";
+            }
+            else if (l_xml.Contains("-09-"))// Guia Remision
+            {
+                nsMgr.AddNamespace("tns", "urn:oasis:names:specification:ubl:schema:xsd:DespatchAdvice-2");
+                l_xpath = "/tns:DespatchAdvice/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent";
+            }
+            else // communicacion de baja
+            {
+                nsMgr.AddNamespace("tns", "urn:sunat:names:specification:ubl:peru:schema:xsd:VoidedDocuments-1");
+                l_xpath = "/tns:VoidedDocuments/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent";
+            }
+
+            nsMgr.AddNamespace("cac", "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2");
+            nsMgr.AddNamespace("udt", "urn:un:unece:uncefact:data:specification:UnqualifiedDataTypesSchemaModule:2");
+            nsMgr.AddNamespace("ext", "urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2");
+            nsMgr.AddNamespace("qdt", "urn:oasis:names:specification:ubl:schema:xsd:QualifiedDatatypes-2");
+            nsMgr.AddNamespace("cbc", "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2");
+            nsMgr.AddNamespace("ds", "http://www.w3.org/2000/09/xmldsig#");
 
 
-                //check signature (verificacion signature)
-                XmlNodeList nodeList = xmlDoc.GetElementsByTagName("ds:Signature");
-                if (nodeList.Count <= 0)
+            /*
+                xmlDoc.SelectSingleNode(l_xpath,nsMgr).AppendChild(xmlDoc.ImportNode(signature, true));
+            */
+            XmlNode fnode = xmlDoc.SelectSingleNode(l_xpath, nsMgr);
+
+            if (fnode != null)
+            {
+                fnode.AppendChild(xmlDoc.ImportNode(signature, true));
+            }
+
+            xmlDoc.Save(l_xml);
+
+            //check signature (verificacion signature)
+            XmlNodeList nodeList = xmlDoc.GetElementsByTagName("ds:Signature");
+            if (nodeList.Count <= 0)
+            {
+                MessageBox.Show("Verification failed: No Signature was found in the document.(Falló verificacion)");
+            }
+            else if (nodeList.Count >= 2)
+            {
+                MessageBox.Show("Verification failed: More that one signature was found for the document.");
+            }
+            else
+            {
+                signedXml.LoadXml((XmlElement)nodeList[0]);
+                if (signedXml.CheckSignature())
                 {
-                    MessageBox.Show("Verification failed: No Signature was found in the document.(Falló verificacion)");
-                }
-                else if (nodeList.Count >= 2)
-                {
-                    MessageBox.Show("Verification failed: More that one signature was found for the document.");
+                    MessageBox.Show("Se añadio Firma a XML satisfactoriamente");
+                    //CreateZip(System.Configuration.ConfigurationSettings.AppSettings["RutaXml"].ToString() + "/" + NombreArchivoXml, NombreArchivoXml);
+                    //MessageBox.Show("Se comprimio el archivo XML!");
                 }
                 else
                 {
-                    signedXml.LoadXml((XmlElement)nodeList[0]);
-                    if (signedXml.CheckSignature())
-                    {
-                        MessageBox.Show("Se añadió firma al XML satisfactoriamente");
-                        //CreateZip(System.Configuration.ConfigurationSettings.AppSettings["RutaXml"].ToString() + "/" + NombreArchivoXml, NombreArchivoXml);
-                        //MessageBox.Show("Se comprimio el archivo XML!");
-                    }
-                    else
-                    {
-                        MessageBox.Show("Falló signature!");
-                    }
-
+                    MessageBox.Show("Falló signature!");
                 }
-
-                // ||||||||||||||||||||||||||||  END TRY CATCH |||||||||||||||||||||||||||||||||||||||||||
             }
-            catch (System.IO.FileNotFoundException ex)
-            {
-                Console.WriteLine(ex.ToString());
-                errorXml.Add(NombreArchivo + "-" + ex.Message);
-            }
-            catch (XmlException ex)
-            {
-                Console.WriteLine(ex.ToString());
-                errorXml.Add(NombreArchivo + "-" + ex.Message);
-            }
-
-
-
-            // herramienta zipear y encriptar base64
-            //Tools Util = new Tools();
-
-            //ZIP ARCHIVO
-            //  Util.ZipXMl(ConfigurationManager.AppSettings["RutaXml"] + "/" + NombreArchivoXml, ConfigurationManager.AppSettings["DestinoPathZip"] + "/" + NombreArchivo + ".zip");
-            //Util.CreateZipFile(ConfigurationManager.AppSettings["RutaXml"] + "/" + NombreArchivoXml, ConfigurationManager.AppSettings["DestinoPathZip"] + "/" + NombreArchivo + ".zip");
-
         }
 
-    }
+        //public static void CreateZip(string pathXML, string namexml)
+        //{
+        //    // ruta para guardar ZIP (firmado)
+        //    string path = System.Configuration.ConfigurationSettings.AppSettings["RutaFirmado"].ToString();
 
+        //    // nombre del zip
+        //    string[] a = namexml.Split('.');
+
+        //    path += "/" + a[0] + ".zip";
+
+        //    // Obtiene text del xml
+        //    string readText = File.ReadAllText(pathXML);
+
+        //    byte[] byteArray = ASCIIEncoding.ASCII.GetBytes(readText);
+        //    string encodedText = Convert.ToBase64String(byteArray);
+
+        //    FileStream destFile = File.Create(path);
+
+        //    byte[] buffer = Encoding.UTF8.GetBytes(encodedText);
+        //    MemoryStream memoryStream = new MemoryStream();
+
+        //    using (System.IO.Compression.GZipStream gZipStream = new System.IO.Compression.GZipStream(destFile, System.IO.Compression.CompressionMode.Compress, true))
+        //    {
+        //        gZipStream.Write(buffer, 0, buffer.Length);
+        //    }
+        //}
+
+    }
 }
